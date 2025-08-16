@@ -1,7 +1,6 @@
-module instram(clk, adr, adr_w, rwn, cs, data_i, data_o);
+module instram(clk, adr, rwn, cs, data_i, data_o);
 	input clk;
 	input [15:0] adr;
-    input [15:0] adr_w;
     input rwn;
     input cs;
     input [7:0] data_i;
@@ -9,7 +8,7 @@ module instram(clk, adr, adr_w, rwn, cs, data_i, data_o);
 	reg [7:0] data_o; 
     reg [7:0] data_i_delay;
 
-	reg [7:0] mem [32768];
+	reg [7:0] mem [65536];
     
 	always @(posedge clk) data_o <= mem[adr];
 
@@ -17,6 +16,6 @@ module instram(clk, adr, adr_w, rwn, cs, data_i, data_o);
 
     always @(posedge clk)
     begin
-        if(!rwn && cs) mem[adr_w] <= data_i;
+        if(!rwn && cs) mem[adr] <= data_i;
     end
 endmodule

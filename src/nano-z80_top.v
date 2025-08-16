@@ -44,6 +44,7 @@ wire    [7:0]   cpu_data_o;
 wire    [7:0]   rom_data_o;
 wire    [7:0]   ram_data_o;
 wire    [7:0]   uart_data_o;
+wire    [7:0]   addr_dec_data_o;
 
 reg     [7:0]   cpu_data_i;
 
@@ -56,6 +57,7 @@ assign rst_p = rst_i;
 wire            ram_cs;
 wire            uart_cs;
 wire            rom_cs;
+wire            addr_dec_cs;
 
 tv80s CPU(
     // Outputs
@@ -80,28 +82,20 @@ tv80s CPU(
     .cen(1'b1)
 );
 
-
-assign rom_cs = ~mreq_n && ~cpu_addr[15];
-
 bootrom bootrom_inst(
     .clk(clk_i),
     .adr(cpu_addr[12:0]),
     .data(rom_data_o)
 );
-
-assign ram_cs = ~mreq_n && cpu_addr[15];
  
 instram main_ram(
     .clk(clk_i),
     .adr(cpu_addr),
-    .adr_w(cpu_addr),
     .rwn(wr_n),
     .cs(ram_cs),
     .data_i(cpu_data_o),
     .data_o(ram_data_o)
 );
-
-assign uart_cs = ~ioreq_n && (cpu_addr[7:0] == 8'h01);
 
 uart uart_inst(
         .clk(clk_i),
@@ -115,12 +109,28 @@ uart uart_inst(
         .uart_tx(uart_tx_o)
 );
 
+addr_decoder addr_dec(
+    .clk_i(clk_i),
+    .rst_n_i(rst_n),
+    .wr_n(wr_n),
+    .addr_i(cpu_addr),
+    .data_i(cpu_data_o),
+    .mreq_n(mreq_n),
+    .ioreq_n(ioreq_n),
+    .data_o(addr_dec_data_o),
+    .ram_cs(ram_cs),
+    .uart_cs(uart_cs),
+    .rom_cs(rom_cs),
+    .addr_dec_cs(addr_dec_cs)
+);
+
 // CPU data input mux
 
 always @(*) begin
         if(rom_cs == 1'b1) cpu_data_i = rom_data_o;
         else if(ram_cs == 1'b1) cpu_data_i = ram_data_o;
         else if(uart_cs == 1'b1) cpu_data_i = uart_data_o;
+        else if(addr_dec_cs == 1'b1) cpu_data_i = addr_dec_data_o;
         else cpu_data_i = cpu_data_o;
 end
 
