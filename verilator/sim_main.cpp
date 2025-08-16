@@ -99,7 +99,7 @@ int main(int argc, char** argv) {
         // Read outputs
         VL_PRINTF("[%" PRId64 "] clk=%x rstl=%x\n",
                   contextp->time(), top->clk_i, top->rst_i);
-    	if(contextp->time() > 100000) done=1;
+    	if(contextp->time() > 10000000) done=1;
     }
 
     // Final model cleanup

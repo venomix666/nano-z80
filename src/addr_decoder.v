@@ -33,7 +33,7 @@ always @(posedge clk_i or negedge rst_n_i)
 begin
     if(rst_n_i == 1'b0)
     begin
-        io_bank = 8'd0;
+        io_bank <= 8'd0;
     end
     else if(wr_n == 1'b0 && ioreq_n == 1'b0)
     case(addr_i[7:0])

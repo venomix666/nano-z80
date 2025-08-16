@@ -42,17 +42,17 @@ begin
 			else
 				next_state <= S_IDLE;
 		S_START:
-			if(cycle_cnt == CYCLE - 1)
+			if(cycle_cnt >= CYCLE - 1)
 				next_state <= S_SEND_BYTE;
 			else
 				next_state <= S_START;
 		S_SEND_BYTE:
-			if(cycle_cnt == CYCLE - 1  && bit_cnt == 3'd7)
+			if(cycle_cnt >= CYCLE - 1  && bit_cnt == 3'd7)
 				next_state <= S_STOP;
 			else
 				next_state <= S_SEND_BYTE;
 		S_STOP:
-			if(cycle_cnt == CYCLE - 1)
+			if(cycle_cnt >= CYCLE - 1)
 				next_state <= S_IDLE;
 			else
 				next_state <= S_STOP;
@@ -71,7 +71,7 @@ begin
 			tx_data_ready <= 1'b0;
 		else
 			tx_data_ready <= 1'b1;
-	else if(state == S_STOP && cycle_cnt == CYCLE - 1)
+	else if(state == S_STOP && cycle_cnt >= CYCLE - 1)
 			tx_data_ready <= 1'b1;
 end
 
@@ -94,7 +94,7 @@ begin
 			bit_cnt <= 3'd0;
 		end
 	else if(state == S_SEND_BYTE)
-		if(cycle_cnt == CYCLE - 1)
+		if(cycle_cnt >= CYCLE - 1)
 			bit_cnt <= bit_cnt + 3'd1;
 		else
 			bit_cnt <= bit_cnt;
@@ -107,7 +107,7 @@ always@(posedge clk or negedge rst_n)
 begin
 	if(rst_n == 1'b0)
 		cycle_cnt <= 16'd0;
-	else if((state == S_SEND_BYTE && cycle_cnt == CYCLE - 1) || next_state != state)
+	else if((state == S_SEND_BYTE && cycle_cnt >= CYCLE - 1) || next_state != state)
 		cycle_cnt <= 16'd0;
 	else
 		cycle_cnt <= cycle_cnt + 16'd1;	
