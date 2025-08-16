@@ -1,0 +1,24 @@
+UART_PORT       equ 01h
+
+        org 0
+init:
+        call print
+        db "Hello world!\n\0"
+
+        halt
+
+
+print:
+print_loop:
+        
+        pop hl
+        ld a,(hl)
+        push hl
+
+        cp 0
+
+        ret z
+
+        out (UART_PORT),a
+        jp print_loop
+

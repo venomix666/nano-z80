@@ -9,7 +9,7 @@ module instram(clk, adr, adr_w, rwn, cs, data_i, data_o);
 	reg [7:0] data_o; 
     reg [7:0] data_i_delay;
 
-	reg [7:0] mem [65536];
+	reg [7:0] mem [32768];
     
 	always @(posedge clk) data_o <= mem[adr];
 
