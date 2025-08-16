@@ -13,10 +13,10 @@ module instram(clk, adr, adr_w, rwn, cs, data_i, data_o);
     
 	always @(posedge clk) data_o <= mem[adr];
 
-    always @(posedge clk) data_i_delay <= data_i;
+    //always @(posedge clk) data_i_delay <= data_i;
 
     always @(posedge clk)
     begin
-        if(!rwn && cs) mem[adr_w] <= data_i_delay;
+        if(!rwn && cs) mem[adr_w] <= data_i;
     end
 endmodule

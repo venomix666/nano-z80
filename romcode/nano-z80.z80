@@ -1,9 +1,10 @@
 UART_PORT       equ 01h
-
+RAM_END         equ $B000
         org 0
+        ld sp, RAM_END
 init:
         call print
-        db "Hello world!\n\0"
+        db "Hello world!",13,10,0
 
         halt
 
@@ -13,6 +14,7 @@ print_loop:
         
         pop hl
         ld a,(hl)
+        inc hl
         push hl
 
         cp 0
