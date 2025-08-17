@@ -20,10 +20,10 @@ module nanoz80_top
     //input           clkusb_i,
     input           uart_rx_i,
     //input           uart_b_rx_i,
-    output          uart_tx_o
+    output          uart_tx_o,
     //output          uart_b_tx_o,
-    //output          leds[5:0],
-    //output          ws2812_o,
+    output          leds[5:0],
+    output          ws2812_o
     //output          sdclk,
     //output            tmds_clk_p    ,
     //output            tmds_clk_n    ,
@@ -44,6 +44,7 @@ wire    [7:0]   cpu_data_o;
 wire    [7:0]   rom_data_o;
 wire    [7:0]   ram_data_o;
 wire    [7:0]   uart_data_o;
+wire    [7:0]   leds_data_o;
 wire    [7:0]   addr_dec_data_o;
 
 reg     [7:0]   cpu_data_i;
@@ -57,7 +58,17 @@ assign rst_p = rst_i;
 wire            ram_cs;
 wire            uart_cs;
 wire            rom_cs;
+wire            led_cs;
 wire            addr_dec_cs;
+
+wire    [7:0]   ledwire;
+
+assign leds[5] = ~ledwire[5];
+assign leds[4] = ~ledwire[4];
+assign leds[3] = ~ledwire[3];
+assign leds[2] = ~ledwire[2];
+assign leds[1] = ~ledwire[1];
+assign leds[0] = ~ledwire[0];
 
 tv80s CPU(
     // Outputs
@@ -120,8 +131,21 @@ addr_decoder addr_dec(
     .data_o(addr_dec_data_o),
     .ram_cs(ram_cs),
     .uart_cs(uart_cs),
+    .led_cs(led_cs),
     .rom_cs(rom_cs),
     .addr_dec_cs(addr_dec_cs)
+);
+
+leds leds_inst(
+    .clk_i(clk_i),
+    .rst_n_i(rst_n),
+    .wr_n(wr_n),
+    .reg_addr_i(cpu_addr),
+    .data_i(cpu_data_o),
+    .led_cs(led_cs),
+    .data_o(leds_data_o),
+    .leds(ledwire),
+    .ws2812(ws2812_o)
 );
 
 // CPU data input mux
@@ -130,6 +154,7 @@ always @(*) begin
         if(rom_cs == 1'b1) cpu_data_i = rom_data_o;
         else if(ram_cs == 1'b1) cpu_data_i = ram_data_o;
         else if(uart_cs == 1'b1) cpu_data_i = uart_data_o;
+        else if(led_cs == 1'b1) cpu_data_i = leds_data_o;
         else if(addr_dec_cs == 1'b1) cpu_data_i = addr_dec_data_o;
         else cpu_data_i = cpu_data_o;
 end

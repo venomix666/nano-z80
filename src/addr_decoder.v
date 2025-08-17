@@ -15,6 +15,7 @@ module addr_decoder(
     output              ram_cs,
     output              uart_cs,
     output              rom_cs,
+    output              led_cs,
     output              addr_dec_cs
 );
 
@@ -24,6 +25,7 @@ reg [7:0]   data_o_reg;
 reg         ram_cs_reg;
 reg         uart_cs_reg;
 reg         rom_cs_reg;
+reg         led_cs_reg;
 reg         addr_dec_cs_reg;
 reg         rom_disable;
 
@@ -50,6 +52,7 @@ always @(*) begin
     ram_cs_reg <= 1'b0;
     rom_cs_reg <= 1'b0;
     uart_cs_reg <= 1'b0;
+    led_cs_reg <= 1'b0;
     addr_dec_cs_reg <= 1'b0;
 
     // Memory requests
@@ -61,6 +64,7 @@ always @(*) begin
     begin
         case(io_bank)
             8'h00: uart_cs_reg <= 1'b1;
+            8'h01: led_cs_reg <= 1'b1;
             default: uart_cs_reg <= 1'b0;
         endcase
     end
@@ -80,6 +84,7 @@ end
 assign data_o = data_o_reg;
 assign ram_cs = ram_cs_reg;
 assign uart_cs = uart_cs_reg;
+assign led_cs = led_cs_reg;
 assign rom_cs = rom_cs_reg;
 assign addr_dec_cs = addr_dec_cs_reg;
 

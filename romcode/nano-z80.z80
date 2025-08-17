@@ -16,6 +16,11 @@ init:
         ld hl, msg_ready
         call print_string
 
+        ; Turn on a LED, test code
+        ld a,$01
+        out ($ff),a
+        out ($00),a
+
 input:
         ld hl, INPUT_BUF        ; Input buffer
         ld b, 0                 ; Cursor position
