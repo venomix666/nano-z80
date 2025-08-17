@@ -1,35 +1,272 @@
+; nano-Z80 monitor
+; 
+; Heavily inspired by the BSX monitor by Dean Belsfield
+
 UART_PORT       equ 01h
 RAM_END         equ $FFFF
+INPUT_BUF       equ $FF00
         org 0
 
         ; Configure stack pointer
         ld sp, RAM_END
 init:
-        ; Print string
-        call print
-        db "Hello world!",13,10,0
+        ; Print string with pointer
+        ld hl, msg_boot
+        call print_string
+        ld hl, msg_ready
+        call print_string
 
-        ; Enter a UART echo loop
-echoloop:
-        call uart_rx_blocking
-        call uart_tx
-        jp echoloop
+input:
+        ld hl, INPUT_BUF        ; Input buffer
+        ld b, 0                 ; Cursor position
+input_loop:
+        call read_char          ; Read character
+        call print_char         ; Echo
+        cp $7f
+        jr z,input_backspace    ; Handle backspace
 
-print:
-print_loop:
+        ld (hl),a               ; Store character in buffer
+        inc hl                  ; Increment buffer position
+        inc b                   ; Increment cursor position
+        cp $0d                  ; Newline?
+        jr nz, input_loop       ; If not, read next character
+
+        call print_cr
         
-        pop hl
-        ld a,(hl)
-        inc hl
+        ld a,(INPUT_BUF)        ; Put the first read character in a
+        ld hl, input_ret        ; Push the return address on the stack
         push hl
 
-        cp 0
-
+        ; Decode input command
+        cp 'M'
+        jp z, monitor_memory_dump
+        cp 'L'
+        jp z, monitor_memory_load
+        cp 'J'
+        jp z, monitor_jump
+        cp 'O'
+        jp z, monitor_port_out
+        cp 'I'
+        jp z, monitor_port_in
+        cp $0d
         ret z
+        
+        ld hl, msg_invalid_command
+        jp print_string
 
-        call uart_tx
-        ;out (UART_PORT),a
-        jp print_loop
+input_ret:
+        call print_cr
+        ld hl, msg_ready
+        call print_string
+        jr input
+
+input_backspace:
+        ld a,b                  ; First character?
+        or a
+        jr z, input_loop
+        dec hl                  ; Decrement buffer position
+        dec b                   ; Decrement cursor position
+        ld (hl),0               ; Clear buffer data
+        jr input_loop
+
+
+; Monitor jump
+; Jumps to the supplied address
+monitor_jump:
+        ld hl,INPUT_BUF+1
+        call parse_hex16
+        ex de, hl
+        jp (hl)
+
+; Monitor port in
+; Read an IO port
+monitor_port_in:
+        ld hl, INPUT_BUF+1
+        call parse_hex16
+        ld a,(hl)
+        cp ','
+        jr nz, monitor_port_in_error
+        inc hl
+        push de
+        call parse_hex16
+        pop bc
+        ld a,b
+        or a
+        jr nz, monitor_port_in_invalid_port
+        ld a,d
+        or e
+        jp nz, port_dump
+monitor_port_in_error:
+        ld hl, msg_error
+        jp print_string
+monitor_port_in_invalid_port:
+        ld hl, msg_invalid_port
+        jp print_string
+
+; Monitor port out
+; Write an IO port
+monitor_port_out:
+        ld hl, INPUT_BUF+1
+        call parse_hex16
+        ld a,(hl)
+        cp ','
+        jr nz,monitor_port_out_error
+        inc hl
+        ld a,d
+        or a
+        jr nz,monitor_port_out_invalid_port
+        ld c,e
+monitor_port_out_pos_1:
+        ld a,(hl)
+        cp $0d
+        ret z
+        cp $22
+        jr z,monitor_port_out_pos_2
+        call parse_hex8
+        out (c),e
+        jr monitor_port_out_pos_1
+monitor_port_out_pos_2:
+        inc hl
+        ld a,(hl)
+        cp $0d
+        ret z
+        cp $22
+        jr z, monitor_port_out_pos_3
+        out (c),a
+        jr monitor_port_out_pos_2
+monitor_port_out_pos_3:
+        inc hl
+        jr monitor_port_out_pos_1
+
+monitor_port_out_error:
+        ld hl, msg_error
+        jp print_string
+monitor_port_out_invalid_port:
+        ld hl, msg_invalid_port
+        jp print_string
+
+; Monitor memory dump
+; Dump data in memory
+monitor_memory_dump:
+        ld hl, INPUT_BUF+1
+        call parse_hex16
+        ld a,(hl)
+        cp ','
+        jr nz, monitor_memory_dump_error
+        inc hl
+        push de
+        call parse_hex16
+        pop hl
+        ld a,d
+        or e
+        jp nz, memory_dump
+
+monitor_memory_dump_error:
+        ld hl, msg_error
+        jp print_string
+
+monitor_memory_load:
+        call read_char
+        ld l,a
+        call read_char
+        ld h,a
+        call read_char
+        ld c,a
+monitor_memory_load_pos_1:
+        call read_char
+        ld (hl),a
+        inc hl
+        dec bc
+        ld a,b
+        or c
+        jr nz, monitor_memory_load_pos_1
+        ret
+
+
+; Port dump
+; C contains the port
+; DE contains number of bytes to read
+port_dump:
+        in a,(c)
+        call print_hex8
+        dec de
+        LD a,d
+        or e
+        ret z
+        call read_char_non_blocking
+        cp $1b                          ; break if escape, change to ctrl+c?
+        ret z
+        jr port_dump
+
+; Memory dump
+; HL contains start of memory dump
+; DE contains number of bytes to dump
+memory_dump:
+        call print_hex16
+        ld a, ':'
+        call print_char
+        ld a, ' '
+        call print_char
+        ld b, 16
+        ld ix, INPUT_BUF
+        ld (ix+0),' '
+memory_dump_pos_1:
+        ld a,(hl)
+        push af
+        cp 32
+        jr nc, memory_dump_pos_2
+        ld a,'.'
+memory_dump_pos_2:
+        ld (ix+1),a
+        inc ix
+        pop af
+        call print_hex8
+        ld a, ' '
+        call print_char
+        inc hl
+        dec de
+        ld a,d
+        or e
+        jr z, memory_dump_pos_5
+        call read_char_non_blocking
+        cp $1b
+        jr z, memory_dump_pos_3
+        djnz memory_dump_pos_1
+        call memory_dump_pos_5
+        jr memory_dump 
+memory_dump_pos_3:
+        ld a,b
+        or a
+        jr z, memory_dump_pos_5
+        dec b
+        jr z, memory_dump_pos_5
+        ld a,32
+memory_dump_pos_4:
+        call print_char
+        call print_char
+        djnz memory_dump_pos_4
+memory_dump_pos_5
+        ld (ix+1),$0d
+        ld (ix+2),$0a
+        ld (ix+3),$00
+        push hl
+        ld hl, INPUT_BUF
+        call print_string
+        pop hl
+        ret
+
 
         include "uart.z80"
-
+        include "print.z80"
+        include "read.z80"
+        
+msg_boot:
+        db "nano-Z80 monitor v0.1",13,10,0
+msg_ready:
+        db "Ready",13,10,0
+msg_invalid_command:
+        db "Invalid command",13,10,0
+msg_error:
+        db "Error",13,10,0
+msg_invalid_port:
+        db "Invalid port number",13,10,0

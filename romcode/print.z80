@@ -1,0 +1,67 @@
+; Various printing routines for the nano-Z80 ROM code
+
+; Print CR/LF
+print_cr:
+        ld a, $0d
+        call print_char
+        ld a, $0a
+        jp print_char
+
+; Print zero-terminated string
+; HL containes a pointer to the string
+print_string:
+print_string_loop:
+        ld a,(hl)
+        or a
+        ret z
+        call print_char
+        inc hl
+        jr print_string_loop
+
+
+; Print inline zero-terminated string
+; Assuming that the string is in the code directly after the call
+
+print_string_inline:
+print_string_inline_loop:
+        pop hl
+        ld a,(hl)
+        inc hl
+        push hl
+
+        cp 0
+
+        ret z
+
+        call print_char
+        jr print_string_inline_loop
+
+; Print a 16 bit hex number
+; HL containts the number to print
+print_hex16:
+        ld a,h
+        call print_hex8
+        ld a,l
+        ; Fall through
+
+; Print a 8-bit hex number
+; A containts the number to print
+print_hex8:
+        ld c,a
+        rra
+        rra
+        rra
+        rra
+        call print_hex_nibble
+        ld a,c
+print_hex_nibble:
+        and $0f
+        add a, $90
+        daa
+        adc a, $40
+        daa
+        jr print_char
+
+; Print character, currently only to the UART
+print_char:
+        jp uart_tx
