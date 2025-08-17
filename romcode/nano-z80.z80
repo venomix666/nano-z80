@@ -10,6 +10,7 @@ init:
         db "Hello world!",13,10,0
 
         ; Enter a UART echo loop
+echoloop:
         ; Select UART
         ld a,$00
         out ($ff),a
@@ -23,7 +24,7 @@ wait_rx:
         ; Echo the character
         in a,($02)
         call uart_output
-        jp wait_rx
+        jp echoloop
 
 print:
 print_loop:
