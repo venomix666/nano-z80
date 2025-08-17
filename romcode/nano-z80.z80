@@ -11,19 +11,8 @@ init:
 
         ; Enter a UART echo loop
 echoloop:
-        ; Select UART
-        ld a,$00
-        out ($ff),a
-
-        ; Wait for an incoming character
-wait_rx:
-        in a,($03)
-        bit 0, a
-        jr z, wait_rx
-        
-        ; Echo the character
-        in a,($02)
-        call uart_output
+        call uart_rx_blocking
+        call uart_tx
         jp echoloop
 
 print:
@@ -38,26 +27,9 @@ print_loop:
 
         ret z
 
-        call uart_output
+        call uart_tx
         ;out (UART_PORT),a
         jp print_loop
 
-
-uart_output:
-        ; Store char in b
-        ld b,a
-        ; Select UART
-        ld a,$00
-        out ($ff),a
-        ; Wait for TX to be ready
-wait_tx:
-        in a,($01)
-        bit 0, a
-        jr z, wait_tx
-        
-        ; Write byte to send
-        ld a,b
-        out ($00),a
-
-        ret
+        include "uart.z80"
 
