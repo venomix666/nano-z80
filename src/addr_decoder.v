@@ -1,8 +1,7 @@
 // nanoz80 address decoder
 //
-// A "register" at io-port 0xff is used to select peripherals
-//
-// Todo - add the possibility to switch the ROM to RAM
+// A register at io-port 0xff is used to select peripherals
+// Port 0xfe contains a register to disable the ROM for a full 64K of RAM
 
 module addr_decoder(
     input               clk_i,
@@ -26,7 +25,7 @@ reg         ram_cs_reg;
 reg         uart_cs_reg;
 reg         rom_cs_reg;
 reg         addr_dec_cs_reg;
-
+reg         rom_disable;
 
 // Register writing
 always @(posedge clk_i or negedge rst_n_i)
@@ -34,10 +33,12 @@ begin
     if(rst_n_i == 1'b0)
     begin
         io_bank <= 8'd0;
+        rom_disable <= 1'd0;
     end
     else if(wr_n == 1'b0 && ioreq_n == 1'b0)
     case(addr_i[7:0])
         8'hff: io_bank <= data_i;
+        8'hfe: rom_disable <= data_i[0];
         default: dummy_reg <= data_i;
     endcase
 end
@@ -52,15 +53,26 @@ always @(*) begin
     addr_dec_cs_reg <= 1'b0;
 
     // Memory requests
-    if(mreq_n == 1'b0 && addr_i[15] == 1'b0) rom_cs_reg <= 1'b1;
-    if(mreq_n == 1'b0 && addr_i[15] == 1'b1) ram_cs_reg <= 1'b1;
+    if(mreq_n == 1'b0 && addr_i < 16'h2000 && rom_disable == 1'b0) rom_cs_reg <= 1'b1;
+    else if(mreq_n == 1'b0) ram_cs_reg <= 1'b1;
 
     // IO requests
-    if(ioreq_n == 1'b0)
+    if(ioreq_n == 1'b0 && addr_i[7:0] < 8'hfe)
     begin
         case(io_bank)
             8'h00: uart_cs_reg <= 1'b1;
             default: uart_cs_reg <= 1'b0;
+        endcase
+    end
+    else if(ioreq_n == 1'b0) addr_dec_cs_reg <= 1'b1;
+
+    // Reading of internal registers
+    if(ioreq_n == 1'b0)
+    begin
+        case(addr_i[7:0])
+            8'hfe: data_o_reg <= {7'd0, rom_disable};
+            8'hff: data_o_reg <= io_bank;
+            default: data_o_reg <= 8'd0;
         endcase
     end
 end

@@ -30,7 +30,7 @@ uart_output:
         ; Store char in b
         ld b,a
         ; Select UART
-        ld a,$00
+        ld a,$01
         out ($ff),a
         ; Wait for TX to be ready
 wait_tx:
