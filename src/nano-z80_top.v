@@ -17,14 +17,14 @@ module nanoz80_top
 (
     input           clk_i,
     input           rst_i, //S1
-    //input           clkusb_i,
+    input           clkusb_i,
     input           uart_rx_i,
     //input           uart_b_rx_i,
     output          uart_tx_o,
     //output          uart_b_tx_o,
     output          leds[5:0],
     output          ws2812_o,
-    inout [12:0]    gpio
+    inout [12:0]    gpio,
     //output          sdclk,
     //output            tmds_clk_p    ,
     //output            tmds_clk_n    ,
@@ -32,8 +32,8 @@ module nanoz80_top
     //output     [2:0]  tmds_data_n   ,
     //inout           sdcmd,
     //inout [3:0]     sddat,
-    //inout           usb_dp,
-    //inout           usb_dm
+    inout           usb_dp,
+    inout           usb_dm
 );
 
 wire            mreq_n;
@@ -47,6 +47,7 @@ wire    [7:0]   ram_data_o;
 wire    [7:0]   uart_data_o;
 wire    [7:0]   leds_data_o;
 wire    [7:0]   gpio_data_o;
+wire    [7:0]   usb_data_o;
 wire    [7:0]   addr_dec_data_o;
 
 reg     [7:0]   cpu_data_i;
@@ -62,6 +63,7 @@ wire            uart_cs;
 wire            rom_cs;
 wire            led_cs;
 wire            gpio_cs;
+wire            usb_cs;
 wire            addr_dec_cs;
 
 wire    [7:0]   ledwire;
@@ -136,6 +138,7 @@ addr_decoder addr_dec(
     .uart_cs(uart_cs),
     .led_cs(led_cs),
     .gpio_cs(gpio_cs),
+    .usb_cs(usb_cs),
     .rom_cs(rom_cs),
     .addr_dec_cs(addr_dec_cs)
 );
@@ -163,6 +166,19 @@ gpio gpio_inst(
     .gpio(gpio)
 );
 
+usb_interface usb_interface_inst(
+    .clk_i(clk_i),
+    .rst_n_i(rst_n),
+    .clkusb_i(clkusb_i),
+    .wr_n(wr_n),
+    .reg_addr_i(cpu_addr[7:0]),
+    .data_i(cpu_data_o),
+    .usb_cs(usb_cs),
+    .data_o(usb_data_o),
+    .usb_dp(usb_dp),
+    .usb_dm(usb_dm)
+);
+
 
 // CPU data input mux
 
@@ -172,6 +188,7 @@ always @(*) begin
         else if(uart_cs == 1'b1) cpu_data_i = uart_data_o;
         else if(led_cs == 1'b1) cpu_data_i = leds_data_o;
         else if(gpio_cs == 1'b1) cpu_data_i = gpio_data_o;
+        else if(usb_cs == 1'b1) cpu_data_i = usb_data_o;
         else if(addr_dec_cs == 1'b1) cpu_data_i = addr_dec_data_o;
         else cpu_data_i = cpu_data_o;
 end
