@@ -1,10 +1,10 @@
 ; nano-Z80 monitor
 ; 
+; Copyright (c) 2025 Henrik Löfgren
 ; Heavily inspired by the BSX monitor by Dean Belsfield
 
-UART_PORT       equ 01h
-RAM_END         equ $FFFF
-INPUT_BUF       equ $FF00
+        include "defines.z80"
+
         org 0
 
         ; Configure stack pointer
@@ -17,9 +17,10 @@ init:
         call print_string
 
         ; Turn on a LED, test code
+        ld a,IO_SELECT_LEDS
+        out (IO_BANK),a
         ld a,$01
-        out ($ff),a
-        out ($00),a
+        out (LEDS_REG),a
 
 input:
         ld hl, INPUT_BUF        ; Input buffer
@@ -29,6 +30,8 @@ input_loop:
         call print_char         ; Echo
         cp $7f
         jr z,input_backspace    ; Handle backspace
+        cp $08
+        jr z,input_backspace
 
         ld (hl),a               ; Store character in buffer
         inc hl                  ; Increment buffer position

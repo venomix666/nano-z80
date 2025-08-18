@@ -1,7 +1,11 @@
 // nanoz80 address decoder
 //
-// A register at io-port 0xff is used to select peripherals
-// Port 0xfe contains a register to disable the ROM for a full 64K of RAM
+// A register at io-port 0x7f (may be moved?) is used to select peripherals
+// Port 0x7e (may be moved?) contains a register to disable the ROM for a full 64K of RAM
+// UART is always mapped to ports 0x70, 0x71, 0x72, 0x73 to avoid interference
+// with other peripherals during monitor and debug prints etc.
+// The idea is to leave 128 continous ports for sector transfers [0x80 - 0xFF]
+// It remains to be seen if this is a good idea however...
 
 module addr_decoder(
     input               clk_i,
@@ -39,8 +43,8 @@ begin
     end
     else if(wr_n == 1'b0 && ioreq_n == 1'b0)
     case(addr_i[7:0])
-        8'hff: io_bank <= data_i;
-        8'hfe: rom_disable <= data_i[0];
+        8'h7f: io_bank <= data_i;
+        8'h7e: rom_disable <= data_i[0];
         default: dummy_reg <= data_i;
     endcase
 end
@@ -60,22 +64,24 @@ always @(*) begin
     else if(mreq_n == 1'b0) ram_cs_reg <= 1'b1;
 
     // IO requests
-    if(ioreq_n == 1'b0 && addr_i[7:0] < 8'hfe)
+    if(ioreq_n == 1'b0 && (addr_i[7:0] < 8'h70 || addr_i[7:0] > 8'h7f))
     begin
         case(io_bank)
-            8'h00: uart_cs_reg <= 1'b1;
-            8'h01: led_cs_reg <= 1'b1;
-            default: uart_cs_reg <= 1'b0;
+            8'h00: led_cs_reg <= 1'b1;
+            default: led_cs_reg <= 1'b0;
         endcase
     end
-    else if(ioreq_n == 1'b0) addr_dec_cs_reg <= 1'b1;
+    else if(ioreq_n == 1'b0 && addr_i[7:0] > 8'h6f && addr_i[7:0] < 8'h74)
+        uart_cs_reg <= 1'b1;
+    else if(ioreq_n == 1'b0 && addr_i[7:0] > 8'h73 && addr_i[7:0] < 8'h80)
+        addr_dec_cs_reg <= 1'b1;
 
     // Reading of internal registers
     if(ioreq_n == 1'b0)
     begin
         case(addr_i[7:0])
-            8'hfe: data_o_reg <= {7'd0, rom_disable};
-            8'hff: data_o_reg <= io_bank;
+            8'h7e: data_o_reg <= {7'd0, rom_disable};
+            8'h7f: data_o_reg <= io_bank;
             default: data_o_reg <= 8'd0;
         endcase
     end
