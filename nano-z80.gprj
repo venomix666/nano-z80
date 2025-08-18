@@ -15,6 +15,7 @@
         <File path="src/UART/uart_tx.v" type="file.verilog" enable="1"/>
         <File path="src/addr_decoder.v" type="file.verilog" enable="1"/>
         <File path="src/bootrom.v" type="file.verilog" enable="1"/>
+        <File path="src/gpio.v" type="file.verilog" enable="1"/>
         <File path="src/instram.v" type="file.verilog" enable="1"/>
         <File path="src/leds.v" type="file.verilog" enable="1"/>
         <File path="src/nano-z80_top.v" type="file.verilog" enable="1"/>

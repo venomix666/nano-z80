@@ -11,7 +11,7 @@
 // UART
 // USB keyboard support
 //
-// Copyright (C) 2024 Henrik Löfgren
+// Copyright (C) 2025 Henrik Löfgren
 
 module nanoz80_top
 (
@@ -23,7 +23,8 @@ module nanoz80_top
     output          uart_tx_o,
     //output          uart_b_tx_o,
     output          leds[5:0],
-    output          ws2812_o
+    output          ws2812_o,
+    inout [12:0]    gpio
     //output          sdclk,
     //output            tmds_clk_p    ,
     //output            tmds_clk_n    ,
@@ -45,6 +46,7 @@ wire    [7:0]   rom_data_o;
 wire    [7:0]   ram_data_o;
 wire    [7:0]   uart_data_o;
 wire    [7:0]   leds_data_o;
+wire    [7:0]   gpio_data_o;
 wire    [7:0]   addr_dec_data_o;
 
 reg     [7:0]   cpu_data_i;
@@ -59,6 +61,7 @@ wire            ram_cs;
 wire            uart_cs;
 wire            rom_cs;
 wire            led_cs;
+wire            gpio_cs;
 wire            addr_dec_cs;
 
 wire    [7:0]   ledwire;
@@ -132,6 +135,7 @@ addr_decoder addr_dec(
     .ram_cs(ram_cs),
     .uart_cs(uart_cs),
     .led_cs(led_cs),
+    .gpio_cs(gpio_cs),
     .rom_cs(rom_cs),
     .addr_dec_cs(addr_dec_cs)
 );
@@ -148,6 +152,18 @@ leds leds_inst(
     .ws2812(ws2812_o)
 );
 
+gpio gpio_inst(
+    .clk_i(clk_i),
+    .rst_n_i(rst_n),
+    .wr_n(wr_n),
+    .reg_addr_i(cpu_addr),
+    .data_i(cpu_data_o),
+    .gpio_cs(gpio_cs),
+    .data_o(gpio_data_o),
+    .gpio(gpio)
+);
+
+
 // CPU data input mux
 
 always @(*) begin
@@ -155,6 +171,7 @@ always @(*) begin
         else if(ram_cs == 1'b1) cpu_data_i = ram_data_o;
         else if(uart_cs == 1'b1) cpu_data_i = uart_data_o;
         else if(led_cs == 1'b1) cpu_data_i = leds_data_o;
+        else if(gpio_cs == 1'b1) cpu_data_i = gpio_data_o;
         else if(addr_dec_cs == 1'b1) cpu_data_i = addr_dec_data_o;
         else cpu_data_i = cpu_data_o;
 end

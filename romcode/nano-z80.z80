@@ -22,6 +22,13 @@ init:
         ld a,$01
         out (LEDS_REG),a
 
+        ; Turn on a GPIO output, test code
+        ld a,IO_SELECT_GPIO
+        out (IO_BANK),a
+        ld a,$01
+        out (GPIO_DIR1),a
+        out (GPIO_DATA1),a
+
 input:
         ld hl, INPUT_BUF        ; Input buffer
         ld b, 0                 ; Cursor position
