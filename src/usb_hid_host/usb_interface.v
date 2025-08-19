@@ -78,6 +78,8 @@ begin
         8'h08: data_o_reg = {7'd0, report_reg};
         8'h09: data_o_reg = {6'd0, typ};
         8'h0a: data_o_reg = {7'd0, conerr};
+        8'h74: data_o_reg = {7'd0, new_key};
+        8'h75: data_o_reg = keyascii;
         default:
         begin
             data_o_reg = 8'd0;

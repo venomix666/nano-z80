@@ -3,6 +3,7 @@
 // A register at io-port 0x7f (may be moved?) is used to select peripherals
 // Port 0x7e (may be moved?) contains a register to disable the ROM for a full 64K of RAM
 // UART is always mapped to ports 0x70, 0x71, 0x72, 0x73 to avoid interference
+// Keyboard ports are placed on 0x74 and 0x75
 // with other peripherals during monitor and debug prints etc.
 // The idea is to leave 128 continous ports for sector transfers [0x80 - 0xFF]
 // It remains to be seen if this is a good idea however... DMA?
@@ -80,8 +81,10 @@ always @(*) begin
         endcase
     end
     else if(ioreq_n == 1'b0 && addr_i[7:0] > 8'h6f && addr_i[7:0] < 8'h74)
-        uart_cs_reg <= 1'b1;
-    else if(ioreq_n == 1'b0 && addr_i[7:0] > 8'h73 && addr_i[7:0] < 8'h80)
+        uart_cs_reg <= 1'b1; // Always access UART registers
+    else if(ioreq_n == 1'b0 && addr_i[7:0] > 8'h73 && addr_i[7:0] < 8'h76)
+        usb_cs_reg <= 1'b1; // Always access keyboard input registers
+    else if(ioreq_n == 1'b0 && addr_i[7:0] > 8'h75 && addr_i[7:0] < 8'h80)
         addr_dec_cs_reg <= 1'b1;
 
     // Reading of internal registers
