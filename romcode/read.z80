@@ -39,6 +39,21 @@ parse_hex_shift:
         ret
 
 
+; Reads a character and coverts to uppercase, blocking
+read_char_upper:
+        call read_char
+        ; Check if zero
+        or a
+        ret z
+        ; Check if a contains a lowercase character
+        cp 'a'
+        ret c
+        cp 'z'+1
+        ret nc
+        ; If lowercase, subtract 32
+        sub 32
+        ret
+
 ; Read a character, blocking
 ; Reads from both UART and USB keyboard
 read_char:

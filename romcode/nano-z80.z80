@@ -33,7 +33,7 @@ input:
         ld hl, INPUT_BUF        ; Input buffer
         ld b, 0                 ; Cursor position
 input_loop:
-        call read_char          ; Read character
+        call read_char_upper    ; Read character
         call print_char         ; Echo
         cp $7f
         jr z,input_backspace    ; Handle backspace
@@ -181,14 +181,14 @@ monitor_memory_dump_error:
         jp print_string
 
 monitor_memory_load:
-        call read_char
+        call read_char_upper
         ld l,a
-        call read_char
+        call read_char_upper
         ld h,a
-        call read_char
+        call read_char_upper
         ld c,a
 monitor_memory_load_pos_1:
-        call read_char
+        call read_char_upper
         ld (hl),a
         inc hl
         dec bc
