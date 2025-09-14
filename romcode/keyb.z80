@@ -1,0 +1,17 @@
+; Basic keyboard routines for the nano-Z80
+
+; Keyboard get key
+; Set carry if keypress has been read
+; Clear carry if no keypress available
+keyb_getkey:
+        ; Check for an incoming character
+        in a,(KB_AVAIL)
+        bit 0, a
+        ret z
+
+        ; Read the character in a
+        in a,(KB_CHAR)
+
+        scf
+        ret
+

@@ -43,4 +43,4 @@ USB_NEW_REP     equ $08         ; USB new report available
 USB_DEV_TYPE    equ $09         ; USB device type
 USB_ERROR       equ $0a         ; USB error
 KB_AVAIL        equ $74         ; Keyboard character available, non-banked
-KV_CHAR         equ $75         ; Keyboard character, non-banked
+KB_CHAR         equ $75         ; Keyboard character, non-banked

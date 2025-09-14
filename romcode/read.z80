@@ -40,14 +40,22 @@ parse_hex_shift:
 
 
 ; Read a character, blocking
+; Reads from both UART and USB keyboard
 read_char:
+        xor a
+        call keyb_getkey
+        ret c
         call uart_rx
         jr nc, read_char
         ret
 
+
 ; Read a character, non-blocking
 ; Carry set if character has been read
+; Reads from both UART and USB keyboard
 read_char_non_blocking:
         call uart_rx
+        ret c
+        call keyb_getkey
         ret
 

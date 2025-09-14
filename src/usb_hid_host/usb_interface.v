@@ -60,6 +60,8 @@ reg                     new_key_set_reclocked_delay;
 reg             [22:0]  key1_rpt_cnt;
 reg             [22:0]  key2_rpt_cnt;
 
+reg             new_key_next;
+
 localparam      FIRST_REPEAT = 23'd8000000;
 localparam      REPEAT_RATE = 23'd1200000;
 
@@ -185,13 +187,19 @@ always @(posedge clk_i or negedge rst_n_i)
 begin
     if(rst_n_i == 1'b0)
     begin
-        report_reg = 1'b0;
-        new_key = 1'b0;
+        report_reg <= 1'b0;
+        new_key <= 1'b0;
+        new_key_next <= 1'b1; 
     end
-    else if(report == 1'b1) report_reg = 1'b1;
-    else if(new_key_set_reclocked_delay == 1'b1) new_key <= 1'b1;
-    else if((usb_cs == 1'b1) && (reg_addr_i == 8'h00)) new_key = 1'b0;
-    else if((usb_cs == 1'b1) && (reg_addr_i == 8'h08)) report_reg = 1'b0;
+    else
+    begin
+        if(report == 1'b1) report_reg <= 1'b1;
+        else if((usb_cs == 1'b1) && (reg_addr_i == 8'h08)) report_reg <= 1'b0;
+        
+        if(new_key_set_reclocked_delay == 1'b1) new_key_next <= 1'b1;
+        else if((usb_cs == 1'b1) && ((reg_addr_i == 8'h00) || (reg_addr_i == 8'h74))) new_key_next <= 1'b0; 
+        new_key <= new_key_next;
+    end
 end
 
 

@@ -23,6 +23,8 @@ endif
 N=top
 D=../src
 SRCS= $D/nano-z80_top.v $D/addr_decoder.v $D/leds.v $D/gpio.v \
+	  $D/usb_hid_host/usb_hid_host_rom.v $D/usb_hid_host/usb_hid_host.v \
+	  $D/usb_hid_host/usb_interface.v \
 	$D/TV80-verilog/tv80_alu.v $D/TV80-verilog/tv80_core.v \
 	$D/TV80-verilog/tv80_mcode.v $D/TV80-verilog/tv80_reg.v \
 	$D/TV80-verilog/tv80s.v \
