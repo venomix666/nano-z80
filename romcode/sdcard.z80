@@ -1,0 +1,74 @@
+; Basic SD-card routines for the nano-Z80
+
+
+; SD read sector
+; Reads full 512 byte sector to the memory address in hl
+sd_read_sector:
+        ; Set the SD IO bank
+        ld a, IO_SELECT_SD
+        out (IO_BANK),a
+
+        ; Wait until the SD card is ready
+sd_read_sector_wait:
+        in a,(SD_BUSY)
+        cp a,0
+        jr nz, sd_read_sector_wait
+
+        ; Read strobe
+        out (SD_READ),a
+        out (SD_READ),a
+       
+       ; Wait for read to finsih 
+sd_read_sector_wait2:
+        in a,(SD_BUSY)
+        cp a,0
+        jr nz, sd_read_sector_wait2
+
+        ; Copy data to RAM
+        ld a,0
+        ld d,0
+sd_read_sector_copy:
+        out (SD_PAGE),a
+        ld c, SD_DATA
+sd_read_loop:
+        in a,(c)
+        ld (hl),a
+        inc hl
+        inc c
+        ld a,c
+        cp a,0
+        jr nz, sd_read_loop
+        inc d
+        ld a,d
+        cp a,4
+        jr nz, sd_read_sector_copy
+
+        ret
+
+; SD set sector
+; Sets the SD card sector
+; Expects the sector address in de (msw) and bc (lsw)
+sd_set_sector:       
+        ; Set the SD IO bank
+        ld a, IO_SELECT_SD
+        out (IO_BANK),a
+
+        ; Wait until the SD card is ready
+sd_set_sector_wait:
+        in a,(SD_BUSY)
+        cp a,0
+        jr nz, sd_set_sector_wait
+        
+        ; Set sector
+        ld a,c
+        out (SD_ADDR_0),a
+        ld a,b
+        out (SD_ADDR_1),a
+        ld a,e
+        out (SD_ADDR_2),a
+        ld a,d
+        out (SD_ADDR_3),a
+        
+        ret
+
+        
