@@ -181,14 +181,16 @@ monitor_memory_dump_error:
         jp print_string
 
 monitor_memory_load:
-        call read_char_upper
+        call read_char
         ld l,a
-        call read_char_upper
+        call read_char
         ld h,a
-        call read_char_upper
+        call read_char
         ld c,a
+        call read_char
+        ld b,a
 monitor_memory_load_pos_1:
-        call read_char_upper
+        call read_char
         ld (hl),a
         inc hl
         dec bc
