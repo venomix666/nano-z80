@@ -15,10 +15,14 @@
         <File path="src/UART/uart_tx.v" type="file.verilog" enable="1"/>
         <File path="src/addr_decoder.v" type="file.verilog" enable="1"/>
         <File path="src/bootrom.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_dpb/sector_dpram.v" type="file.verilog" enable="1"/>
         <File path="src/gpio.v" type="file.verilog" enable="1"/>
         <File path="src/instram.v" type="file.verilog" enable="1"/>
         <File path="src/leds.v" type="file.verilog" enable="1"/>
         <File path="src/nano-z80_top.v" type="file.verilog" enable="1"/>
+        <File path="src/sdcard/sd_interface.v" type="file.verilog" enable="1"/>
+        <File path="src/sdcard/sd_rw.v" type="file.verilog" enable="1"/>
+        <File path="src/sdcard/sdcmd_ctrl.v" type="file.verilog" enable="1"/>
         <File path="src/usb_hid_host/usb_hid_host.v" type="file.verilog" enable="1"/>
         <File path="src/usb_hid_host/usb_hid_host_rom.v" type="file.verilog" enable="1"/>
         <File path="src/usb_hid_host/usb_interface.v" type="file.verilog" enable="1"/>

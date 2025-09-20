@@ -25,13 +25,13 @@ module nanoz80_top
     output          leds[5:0],
     output          ws2812_o,
     inout [12:0]    gpio,
-    //output          sdclk,
+    output          sdclk,
     //output            tmds_clk_p    ,
     //output            tmds_clk_n    ,
     //output     [2:0]  tmds_data_p   ,//{r,g,b}
     //output     [2:0]  tmds_data_n   ,
-    //inout           sdcmd,
-    //inout [3:0]     sddat,
+    inout           sdcmd,
+    inout [3:0]     sddat,
     inout           usb_dp,
     inout           usb_dm
 );
@@ -48,6 +48,7 @@ wire    [7:0]   uart_data_o;
 wire    [7:0]   leds_data_o;
 wire    [7:0]   gpio_data_o;
 wire    [7:0]   usb_data_o;
+wire    [7:0]   sd_data_o;
 wire    [7:0]   addr_dec_data_o;
 
 reg     [7:0]   cpu_data_i;
@@ -64,6 +65,7 @@ wire            rom_cs;
 wire            led_cs;
 wire            gpio_cs;
 wire            usb_cs;
+wire            sd_cs;
 wire            addr_dec_cs;
 
 wire    [7:0]   ledwire;
@@ -139,6 +141,7 @@ addr_decoder addr_dec(
     .led_cs(led_cs),
     .gpio_cs(gpio_cs),
     .usb_cs(usb_cs),
+    .sd_cs(sd_cs),
     .rom_cs(rom_cs),
     .addr_dec_cs(addr_dec_cs)
 );
@@ -179,6 +182,19 @@ usb_interface usb_interface_inst(
     .usb_dm(usb_dm)
 );
 
+sd_interface sd_interface_inst(
+    .clk_i(clk_i),
+    .rst_n_i(rst_n), 
+    .wr_n(wr_n),
+    .reg_addr_i(cpu_addr[7:0]),
+    .data_i(cpu_data_o),
+    .sd_cs(sd_cs),
+    .data_o(sd_data_o),
+    .sdclk(sdclk),
+    .sdcmd(sdcmd),
+    .sddat(sddat) 
+);
+
 
 // CPU data input mux
 
@@ -189,6 +205,7 @@ always @(*) begin
         else if(led_cs == 1'b1) cpu_data_i = leds_data_o;
         else if(gpio_cs == 1'b1) cpu_data_i = gpio_data_o;
         else if(usb_cs == 1'b1) cpu_data_i = usb_data_o;
+        else if(sd_cs == 1'b1) cpu_data_i = sd_data_o;
         else if(addr_dec_cs == 1'b1) cpu_data_i = addr_dec_data_o;
         else cpu_data_i = cpu_data_o;
 end

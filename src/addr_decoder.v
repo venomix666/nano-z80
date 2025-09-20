@@ -23,6 +23,7 @@ module addr_decoder(
     output              led_cs,
     output              gpio_cs,
     output              usb_cs,
+    output              sd_cs,
     output              addr_dec_cs
 );
 
@@ -35,6 +36,7 @@ reg         rom_cs_reg;
 reg         led_cs_reg;
 reg         gpio_cs_reg;
 reg         usb_cs_reg;
+reg         sd_cs_reg;
 reg         addr_dec_cs_reg;
 reg         rom_disable;
 
@@ -64,6 +66,7 @@ always @(*) begin
     led_cs_reg <= 1'b0;
     gpio_cs_reg <= 1'b0;
     usb_cs_reg <= 1'b0;
+    sd_cs_reg <= 1'b0;
     addr_dec_cs_reg <= 1'b0;
 
     // Memory requests
@@ -77,6 +80,7 @@ always @(*) begin
             8'h00: led_cs_reg <= 1'b1;
             8'h01: gpio_cs_reg <= 1'b1;
             8'h02: usb_cs_reg <= 1'b1;
+            8'h03: sd_cs_reg <= 1'b1;
             default: led_cs_reg <= 1'b0;
         endcase
     end
@@ -104,6 +108,7 @@ assign uart_cs = uart_cs_reg;
 assign led_cs = led_cs_reg;
 assign gpio_cs = gpio_cs_reg;
 assign usb_cs = usb_cs_reg;
+assign sd_cs = sd_cs_reg;
 assign rom_cs = rom_cs_reg;
 assign addr_dec_cs = addr_dec_cs_reg;
 
