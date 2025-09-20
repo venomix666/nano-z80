@@ -17,6 +17,7 @@ IO_BANK         equ $7f         ; IO bank selection register
 IO_SELECT_LEDS  equ $00         ; IO bank value for LEDs
 IO_SELECT_GPIO  equ $01         ; IO bank value for GPIO
 IO_SELECT_USB   equ $02         ; IO bank value for USB HID
+IO_SELECT_SD    equ $03         ; IO bank balue for SD Card
 
 ; LEDs IO ports
 LEDS_REG        equ $00         ; LED registers, bits 0-6 control one LED each
@@ -44,3 +45,16 @@ USB_DEV_TYPE    equ $09         ; USB device type
 USB_ERROR       equ $0a         ; USB error
 KB_AVAIL        equ $74         ; Keyboard character available, non-banked
 KB_CHAR         equ $75         ; Keyboard character, non-banked
+
+; SD Card interface IO ports
+SD_ADDR_0       equ $00         ; SD card address (LSB)
+SD_ADDR_1       equ $01         ; ..
+SD_ADDR_2       equ $02         ; ..
+SD_ADDR_3       equ $03         ; SD card address (MSB)
+SD_BUSY         equ $04         ; SD card busy flag
+SD_READ         equ $05         ; SD card read strobe
+SD_WRITE        equ $06         ; SD card write stribe
+SD_PAGE         equ $07         ; Select data page (0-3)
+SD_STATUS       equ $08         ; SD card status
+SD_TYPE         equ $09         ; SD card type
+SD_DATA         equ $80         ; Start of data page ($80-$FF)

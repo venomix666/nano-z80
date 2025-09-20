@@ -29,6 +29,15 @@ init:
         out (GPIO_DIR1),a
         out (GPIO_DATA1),a
 
+        ; Set the SD-card sector
+        ld de,$0100
+        ld bc,$0000
+        call sd_set_sector
+
+        ; Read the sector to addredd $E000
+        ld hl, $e000
+        call sd_read_sector
+
 input:
         ld hl, INPUT_BUF        ; Input buffer
         ld b, 0                 ; Cursor position
@@ -277,7 +286,8 @@ memory_dump_pos_5
         include "keyb.z80"
         include "print.z80"
         include "read.z80"
-        
+        include "sdcard.z80"
+
 msg_boot:
         db "nano-Z80 monitor v0.1",13,10,0
 msg_ready:
