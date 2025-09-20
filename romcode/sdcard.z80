@@ -1,28 +1,86 @@
 ; Basic SD-card routines for the nano-Z80
 
+; SD boot
+; Read boot sector and boot from sd card
+; Currently uses an offset 0x01000000 block to allow
+; using the same SD-card for nano6502 and nanoZ80
+sd_boot:
+        ; Read the boot sector
+        ld de, $0100
+        ld bc, $0000
+        call sd_set_sector
 
+        ; Do a manual read instead of reading to RAM
+        ; Read strobe
+        out (SD_READ),a
+        call sd_wait
+
+        ; Ensure that we are looking at the beginning of the sector
+        ld a,0
+        out (SD_PAGE),a
+
+        ; Check if valid boot sector
+        in a,(SD_DATA)
+        cp a,$6e
+        ret nz
+        in a,(SD_DATA+1)
+        cp a,$61
+        ret nz
+        in a,(SD_DATA+2)
+        cp a,$6e
+        ret nz
+        in a,(SD_DATA+3)
+        cp a,$6f
+        ret nz
+
+        ; Read start sector address
+        in a,(SD_DATA+4)
+        ld d,a
+        in a,(SD_DATA+5)
+        ld e,a
+        in a,(SD_DATA+6)
+        ld b,a
+        in a,(SD_DATA+7)
+        ld c,a
+
+        ; Read number of pages
+        in a,(SD_DATA+8)
+        ld (PAGE_CNT), a
+
+        ; Read store address
+        in a,(SD_DATA+9)
+        ld h,a
+        ld (BOOT_PAGE), a
+        ld l,0
+        
+
+sd_boot_loop:
+        call sd_set_sector
+        call sd_read_sector
+        
+        ld a,(PAGE_CNT)
+        dec a
+        ld (PAGE_CNT),a
+        cp a,0
+        ret z
+        inc bc
+        ld a,c
+        or b
+        jr nz,sd_boot_loop
+        inc de
+        jr sd_boot_loop
+        
 ; SD read sector
 ; Reads full 512 byte sector to the memory address in hl
 sd_read_sector:
-        ; Set the SD IO bank
-        ld a, IO_SELECT_SD
-        out (IO_BANK),a
-
         ; Wait until the SD card is ready
-sd_read_sector_wait:
-        in a,(SD_BUSY)
-        cp a,0
-        jr nz, sd_read_sector_wait
+        call sd_init
 
         ; Read strobe
         out (SD_READ),a
-        out (SD_READ),a
        
-       ; Wait for read to finsih 
-sd_read_sector_wait2:
-        in a,(SD_BUSY)
-        cp a,0
-        jr nz, sd_read_sector_wait2
+        ; Wait for read to finsih 
+        call sd_wait
 
         ; Copy data to RAM
         ld a,0
@@ -49,16 +107,8 @@ sd_read_loop:
 ; Sets the SD card sector
 ; Expects the sector address in de (msw) and bc (lsw)
 sd_set_sector:       
-        ; Set the SD IO bank
-        ld a, IO_SELECT_SD
-        out (IO_BANK),a
+        call sd_init
 
-        ; Wait until the SD card is ready
-sd_set_sector_wait:
-        in a,(SD_BUSY)
-        cp a,0
-        jr nz, sd_set_sector_wait
-        
         ; Set sector
         ld a,c
         out (SD_ADDR_0),a
@@ -71,4 +121,15 @@ sd_set_sector_wait:
         
         ret
 
-        
+sd_init:
+       ; Set the SD IO bank 
+        ld a, IO_SELECT_SD
+        out (IO_BANK),a
+
+        ; Fall through
+        ; Wait unit SD card is ready
+sd_wait:
+       in a,(SD_BUSY)
+       cp a,0
+       jr nz, sd_wait
+       ret 

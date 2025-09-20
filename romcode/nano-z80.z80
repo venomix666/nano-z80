@@ -72,6 +72,8 @@ input_loop:
         jp z, monitor_port_out
         cp 'I'
         jp z, monitor_port_in
+        cp 'B'
+        jp z, monitor_boot
         cp $0d
         ret z
         
@@ -96,6 +98,14 @@ input_backspace:
 
 ; Monitor jump
 ; Jumps to the supplied address
+
+monitor_boot:
+        call sd_boot
+        ld a, (BOOT_PAGE)
+        ld h, a
+        ld l, 0
+        jp (hl)
+
 monitor_jump:
         ld hl,INPUT_BUF+1
         call parse_hex16

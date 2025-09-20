@@ -3,6 +3,8 @@
 ; Global addresses
 RAM_END         equ $FFFF       ; Top of RAM
 INPUT_BUF       equ $FF00       ; Monitor input buffer
+PAGE_CNT        equ $FFFE       ; SD card page counter
+BOOT_PAGE       equ $FFFF       ; RAM page to boot from
 
 ; UART IO ports
 UART_TX_DATA    equ $70         ; UART transmit data
