@@ -30,13 +30,13 @@ init:
         out (GPIO_DATA1),a
 
         ; Set the SD-card sector
-        ld de,$0100
-        ld bc,$0000
-        call sd_set_sector
+        ;ld de,$0100
+        ;ld bc,$0000
+        ;call sd_set_sector
 
         ; Read the sector to addredd $E000
-        ld hl, $e000
-        call sd_read_sector
+        ;ld hl, $e000
+        ;call sd_read_sector
 
 input:
         ld hl, INPUT_BUF        ; Input buffer
@@ -101,10 +101,11 @@ input_backspace:
 
 monitor_boot:
         call sd_boot
-        ld a, (BOOT_PAGE)
-        ld h, a
-        ld l, 0
-        jp (hl)
+        ret
+        ;ld a, (BOOT_PAGE)
+        ;ld h, a
+        ;ld l, 0
+        ;jp (hl)
 
 monitor_jump:
         ld hl,INPUT_BUF+1

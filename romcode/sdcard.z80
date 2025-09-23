@@ -5,6 +5,7 @@
 ; Currently uses an offset 0x01000000 block to allow
 ; using the same SD-card for nano6502 and nanoZ80
 sd_boot:
+        call sd_init
         ; Read the boot sector
         ld de, $0100
         ld bc, $0000
@@ -35,13 +36,17 @@ sd_boot:
 
         ; Read start sector address
         in a,(SD_DATA+4)
-        ld d,a
+        ld (SD_ADDR_BUF),a
+        ;ld d,a
         in a,(SD_DATA+5)
-        ld e,a
+        ld (SD_ADDR_BUF+1),a
+        ;ld e,a
         in a,(SD_DATA+6)
-        ld b,a
+        ld (SD_ADDR_BUF+2),a
+        ;ld b,a
         in a,(SD_DATA+7)
-        ld c,a
+        ld (SD_ADDR_BUF+3),a
+        ;ld c,a
 
         ; Read number of pages
         in a,(SD_DATA+8)
@@ -52,9 +57,18 @@ sd_boot:
         ld h,a
         ld (BOOT_PAGE), a
         ld l,0
+
         
 
 sd_boot_loop:
+        ld a, (SD_ADDR_BUF)
+        ld d, a
+        ld a, (SD_ADDR_BUF+1)
+        ld e, a
+        ld a, (SD_ADDR_BUF+2)
+        ld b, a
+        ld a, (SD_ADDR_BUF+3)
+        ld c, a
         call sd_set_sector
         call sd_read_sector
         
@@ -63,11 +77,28 @@ sd_boot_loop:
         ld (PAGE_CNT),a
         cp a,0
         ret z
+        ld a, (SD_ADDR_BUF+2)
+        ld b, a
+        ld a, (SD_ADDR_BUF+3)
+        ld c, a
         inc bc
-        ld a,c
+        ld a, b
+        ld (SD_ADDR_BUF+2), a
+        ld a, c
+        ld (SD_ADDR_BUF+3), a
+        ;ld a, c
         or b
         jr nz,sd_boot_loop
+        ld a, (SD_ADDR_BUF)
+        ld d, a
+        ld a, (SD_ADDR_BUF+1)
+        ld e, a
+
         inc de
+        ld a, d
+        ld (SD_ADDR_BUF), a
+        ld a, e
+        ld (SD_ADDR_BUF+1),a
         jr sd_boot_loop
         
 ; SD read sector
