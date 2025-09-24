@@ -13,8 +13,8 @@ init:
         ; Print string with pointer
         ld hl, msg_boot
         call print_string
-        ;ld hl, msg_ready
-        ;call print_string
+        ld hl, msg_ready
+        call print_string
 
         ; Turn on a LED, test code
         ld a,IO_SELECT_LEDS
@@ -104,11 +104,11 @@ input_backspace:
 
 monitor_boot:
         call sd_boot
-        ret
-        ;ld a, (BOOT_PAGE)
-        ;ld h, a
-        ;ld l, 0
-        ;jp (hl)
+        ;ret
+        ld a, (BOOT_PAGE)
+        ld h, a
+        ld l, 0
+        jp (hl)
 
 monitor_jump:
         ld hl,INPUT_BUF+1

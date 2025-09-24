@@ -55,9 +55,11 @@ sd_boot:
         ; Read store address
         in a,(SD_DATA+9)
         ld h,a
-        ld (BOOT_PAGE), a
         ld l,0
 
+        ; Read boot address
+        in a,(SD_DATA+10)
+        ld (BOOT_PAGE), a
         
 
 sd_boot_loop:
