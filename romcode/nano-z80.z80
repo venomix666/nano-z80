@@ -13,8 +13,8 @@ init:
         ; Print string with pointer
         ld hl, msg_boot
         call print_string
-        ld hl, msg_ready
-        call print_string
+        ;ld hl, msg_ready
+        ;call print_string
 
         ; Turn on a LED, test code
         ld a,IO_SELECT_LEDS
@@ -37,9 +37,12 @@ init:
         ; Read the sector to addredd $E000
         ;ld hl, $e000
         ;call sd_read_sector
+        ld hl, INPUT_BUF-1
+        ld b,0
+        jr input_loop
 
 input:
-        ld hl, INPUT_BUF        ; Input buffer
+        ld hl, INPUT_BUF       ; Input buffer
         ld b, 0                 ; Cursor position
 input_loop:
         call read_char_upper    ; Read character
@@ -76,7 +79,7 @@ input_loop:
         jp z, monitor_boot
         cp $0d
         ret z
-        
+        call print_char  
         ld hl, msg_invalid_command
         jp print_string
 
