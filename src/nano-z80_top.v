@@ -26,10 +26,10 @@ module nanoz80_top
     output          ws2812_o,
     inout [12:0]    gpio,
     output          sdclk,
-    //output            tmds_clk_p    ,
-    //output            tmds_clk_n    ,
-    //output     [2:0]  tmds_data_p   ,//{r,g,b}
-    //output     [2:0]  tmds_data_n   ,
+    output            tmds_clk_p    ,
+    output            tmds_clk_n    ,
+    output     [2:0]  tmds_data_p   ,//{r,g,b}
+    output     [2:0]  tmds_data_n   ,
     inout           sdcmd,
     inout [3:0]     sddat,
     inout           usb_dp,
@@ -49,6 +49,7 @@ wire    [7:0]   leds_data_o;
 wire    [7:0]   gpio_data_o;
 wire    [7:0]   usb_data_o;
 wire    [7:0]   sd_data_o;
+wire    [7:0]   video_data_o;
 wire    [7:0]   addr_dec_data_o;
 
 reg     [7:0]   cpu_data_i;
@@ -66,6 +67,7 @@ wire            led_cs;
 wire            gpio_cs;
 wire            usb_cs;
 wire            sd_cs;
+wire            video_cs;
 wire            addr_dec_cs;
 
 wire    [7:0]   ledwire;
@@ -143,6 +145,7 @@ addr_decoder addr_dec(
     .usb_cs(usb_cs),
     .sd_cs(sd_cs),
     .rom_cs(rom_cs),
+    .video_cs(video_cs),
     .addr_dec_cs(addr_dec_cs)
 );
 
@@ -193,6 +196,22 @@ sd_interface sd_interface_inst(
     .sdclk(sdclk),
     .sdcmd(sdcmd),
     .sddat(sddat) 
+);
+
+video video_inst(
+    .clk_i(clk_i),
+    .clk_vid_i(clk_i),
+    .rst_n_i(rst_n),
+    .R_W_n(wr_n),
+    .reg_addr_i(cpu_addr[7:0]),
+    .reg_addr_r_i(cpu_addr[7:0]),
+    .data_i(cpu_data_o),
+    .video_cs(video_cs),
+    .data_o(video_data_o),
+    .tmds_clk_p_o(tmds_clk_p),
+    .tmds_clk_n_o(tmds_clk_n),
+    .tmds_data_p_o(tmds_data_p),
+    .tmds_data_n_o(tmds_data_n)
 );
 
 
