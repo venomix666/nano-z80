@@ -297,6 +297,7 @@ memory_dump_pos_5
 
 
         include "uart.z80"
+        include "tty.z80"
         include "keyb.z80"
         include "print.z80"
         include "read.z80"

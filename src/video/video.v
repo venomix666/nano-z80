@@ -216,6 +216,7 @@ begin
     else if(reg_addr_i == 8'h02) data_o_reg <= {3'd0, cursor_y};
     else if(reg_addr_i == 8'h03) data_o_reg <= {7'd0, cursor_visible};
     else if(reg_addr_i == 8'h07) data_o_reg <= {7'd0, tty_busy};
+    else if(reg_addr_i == 8'h77) data_o_reg <= {7'd0, tty_busy};
     else if(reg_addr_i == 8'h0a) data_o_reg <= {7'd0, tty_enabled};
     else if(reg_addr_i == 8'h0b) data_o_reg <= {7'd0, scroll_enabled};
     else if(reg_addr_i == 8'h10) data_o_reg <= fg_r;
@@ -269,7 +270,7 @@ begin
         else if(reg_addr_i==8'h03) cursor_visible <= data_i_delay[0];
         else if(reg_addr_i==8'h04) scroll_up <= 1'd1;
         else if(reg_addr_i==8'h05) scroll_down <= 1'd1;
-        else if(reg_addr_i==8'h06)
+        else if(reg_addr_i==8'h06 || reg_addr_i == 8'h76)
         begin
             tty_wdata_pre <= data_i_delay;
             tty_write_strobe <= 1'd1;

@@ -62,6 +62,7 @@ print_hex_nibble:
         daa
         jr print_char
 
-; Print character, currently only to the UART
+; Print character to UART and TTY
 print_char:
-        jp uart_tx
+        call uart_tx
+        jp tty_write

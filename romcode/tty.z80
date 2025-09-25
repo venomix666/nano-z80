@@ -1,0 +1,17 @@
+; Basic HDMI tty routines for the nano-Z80
+
+tty_write:
+;        push af
+;tty_write_wait:
+;        in a,(TTY_BUSY_AVAIL)
+;        cp a, 0
+;        jr nz, tty_write_wait
+        
+        ; Get character from stack
+;        pop af
+
+        ; Write byte to tty
+        out (TTY_WRITE_AVAIL),a
+        
+        ret
+

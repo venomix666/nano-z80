@@ -197,7 +197,7 @@ begin
         else if((usb_cs == 1'b1) && (reg_addr_i == 8'h08)) report_reg <= 1'b0;
         
         if(new_key_set_reclocked_delay == 1'b1) new_key_next <= 1'b1;
-        else if((usb_cs == 1'b1) && ((reg_addr_i == 8'h00) || (reg_addr_i == 8'h74))) new_key_next <= 1'b0; 
+        else if((usb_cs == 1'b1) && ((reg_addr_i == 8'h01) || (reg_addr_i == 8'h75))) new_key_next <= 1'b0; 
         new_key <= new_key_next;
     end
 end

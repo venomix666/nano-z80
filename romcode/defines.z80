@@ -21,6 +21,7 @@ IO_SELECT_LEDS  equ $00         ; IO bank value for LEDs
 IO_SELECT_GPIO  equ $01         ; IO bank value for GPIO
 IO_SELECT_USB   equ $02         ; IO bank value for USB HID
 IO_SELECT_SD    equ $03         ; IO bank balue for SD Card
+IO_SELECT_TTY   equ $04         ; IO bank value for video/tty
 
 ; LEDs IO ports
 LEDS_REG        equ $00         ; LED registers, bits 0-6 control one LED each
@@ -60,4 +61,27 @@ SD_WRITE        equ $06         ; SD card write stribe
 SD_PAGE         equ $07         ; Select data page (0-3)
 SD_STATUS       equ $08         ; SD card status
 SD_TYPE         equ $09         ; SD card type
-SD_DATA         equ $80         ; Start of data page ($80-$FF)
+SD_DATA         equ $80         ; Start of data page ($80-$FFi)
+
+; TTY/Video interface IO ports
+TTY_LINE                equ $00         ; Line avaialble for editing
+TTY_CURSOR_X            equ $01         ; Cursor X position
+TTY_CURSOR_Y            equ $02         ; Cursor Y position
+TTY_CURSOR_VIS          equ $03         ; Cursor visible
+TTY_SCROLL_UP           equ $04         ; Scroll up strobe
+TTY_SCROLL_DOWN         equ $05         ; Scroll down strobe
+TTY_WRITE_CHAR          equ $06         ; Write character to TTY
+TTY_BUSY                equ $07         ; TTY busy flag
+TTY_CLEAR_TO_EOL        equ $08         ; Clear to EOL strobe
+TTY_CLEAR_SCREEN        equ $09         ; Clear screen strobe
+TTY_ENABLED             equ $0a         ; Enably tty functions
+TTY_AUTOSCROLL          equ $0b         ; Enable autoscroll
+TTY_FG_RED              equ $10         ; Foreground red
+TTY_FG_GREEN            equ $11         ; Foreground green
+TTY_FG_BLUE             equ $12         ; Foreground blue
+TTY_BG_RED              equ $13         ; Background red
+TTY_BG_GREEN            equ $14         ; Background green
+TTY_BG_BLUE             equ $15         ; Background blue
+TTY_LINE_DATA           equ $80         ; Data on current line ($80-$CF)
+TTY_WRITE_AVAIL         equ $76         ; Always available TTY write
+TTY_BUSY_AVAIL          equ $77         ; Always avaialble TTY busy 
