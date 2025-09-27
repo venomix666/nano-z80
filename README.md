@@ -10,12 +10,9 @@ Current features:
 * USB keyboard support (with [nanoComp](https://github.com/venomix666/nanoComp/) carrier board)  
 * Bidirectional GPIO on the header on the nanoComp carrier board
 * Control of the LEDs on the Tang Nano 20k board
-
-Planned future features:
-
 * Additional UART on carrier board UART header
 
-Everything is clocked of the (planned) pixel clock, so the Z80-core is running at 25.175 MHz.
+Everything is clocked of the pixel clock, so the Z80-core is running at 25.175 MHz.
 
 A port of David Given's [CP/Mish](https://github.com/venomix666/cpmish/tree/nanoZ80) is underway. It boots, but is still lacking some features and needs cleaning up.
 
