@@ -19,9 +19,9 @@ module nanoz80_top
     input           rst_i, //S1
     input           clkusb_i,
     input           uart_rx_i,
-    //input           uart_b_rx_i,
+    input           uart_b_rx_i,
     output          uart_tx_o,
-    //output          uart_b_tx_o,
+    output          uart_b_tx_o,
     output          leds[5:0],
     output          ws2812_o,
     inout [12:0]    gpio,
@@ -122,11 +122,13 @@ uart uart_inst(
         .rst_n(rst_n),
         .data_i(cpu_data_o),
         .uart_rx(uart_rx_i),
+        .uart_b_rx(uart_b_rx_i),
         .uart_cs(uart_cs),
         .R_W_n(wr_n),
         .reg_addr(cpu_addr[3:0]),
         .data_o(uart_data_o),
-        .uart_tx(uart_tx_o)
+        .uart_tx(uart_tx_o),
+        .uart_b_tx(uart_b_tx_o)
 );
 
 addr_decoder addr_dec(
