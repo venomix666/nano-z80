@@ -86,6 +86,7 @@ always @(*) begin
             8'h02: usb_cs_reg <= 1'b1;
             8'h03: sd_cs_reg <= 1'b1;
             8'h04: video_cs_reg <= 1'b1;
+            8'h05: uart_cs_reg <= 1'b1;
             default: led_cs_reg <= 1'b0;
         endcase
     end

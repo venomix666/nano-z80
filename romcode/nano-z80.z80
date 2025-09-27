@@ -77,6 +77,10 @@ input_loop:
         jp z, monitor_port_in
         cp 'B'
         jp z, monitor_boot
+        cp 'S'
+        jp z, monitor_sd_load
+        cp 'W'
+        jp z, monitor_memory_write
         cp $0d
         ret z
         call print_char  
@@ -109,6 +113,10 @@ monitor_boot:
         ld h, a
         ld l, 0
         jp (hl)
+
+monitor_sd_load:
+        call sd_boot
+        ret
 
 monitor_jump:
         ld hl,INPUT_BUF+1
@@ -181,6 +189,25 @@ monitor_port_out_error:
         jp print_string
 monitor_port_out_invalid_port:
         ld hl, msg_invalid_port
+        jp print_string
+
+; Monitor memory write
+; Write a byte to a memory address
+monitor_memory_write:
+        ld hl, INPUT_BUF+1
+        call parse_hex16
+        ld a,(hl)
+        cp ','
+        jr nz, monitor_memory_write_error
+        inc hl
+        push de
+        call parse_hex8
+        pop hl
+        ld a, e
+        ld (hl),a
+        ret
+monitor_memory_write_error:
+        ld hl, msg_error
         jp print_string
 
 ; Monitor memory dump

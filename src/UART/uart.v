@@ -26,7 +26,7 @@ module uart(
 
 parameter                        CLK_FRE  = 25.175;//Mhz
 parameter                        UART_FRE = 115200;
-parameter                        UART_B_FRE = 9600;
+parameter                        UART_B_FRE = 115200;
 
 reg[7:0]                         tx_data;
 
@@ -101,7 +101,7 @@ begin
         tx_b_data <= 8'h00;
         tx_b_done <= 1'b1;
         tx_b_data_valid <= 1'b0;
-        uart_b_baud <= 3'd1; // 9600 default baudrate
+        uart_b_baud <= 3'd5; // 115200 default baudrate
     end
     // TX handling
     else if(tx_b_data_valid && tx_b_data_ready) 
