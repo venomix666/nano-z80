@@ -13,8 +13,11 @@
 // 07       - tty busy flag
 // 08       - Clear to EOL strobe
 // 09       - Clear screen strobe
-// 0A       - tty output enabled
-// 0B       - Autoscroll and line change enabled
+// 0A       - Clear to EOS strobe
+// 0B       - Delete line strobe
+// 0C       - Insert line strobe
+// 0D (0A)  - tty output enabled
+// 0E (0B)  - Autoscroll and line change enabled
 // 10       - FG Red
 // 11       - FG Green
 // 12       - FG Blue
@@ -80,7 +83,14 @@ localparam  [3:0]   IDLE = 4'd0,
                     MOVE_CURSOR_X = 4'd4,
                     MOVE_CURSOR_Y = 4'd5,
                     CLEAR_SCREEN_INIT = 4'd6,
-                    CLEAR_SCREEN_RUN = 4'd7;
+                    CLEAR_SCREEN_RUN = 4'd7,
+                    CLEAR_TO_EOS_INIT = 4'd8,
+                    CLEAR_TO_EOS_RUN = 4'd9,
+                    DELETE_LINE_INIT = 4'd10,
+                    DELETE_LINE_RUN = 4'd11,
+                    COPY_LINE = 4'd12,
+                    INSERT_LINE_INIT = 4'd13,
+                    INSERT_LINE_RUN = 4'd14;
 
 localparam N = 5; //delay N clocks
 
@@ -194,8 +204,14 @@ reg             scroll_down;
 reg             tty_write_strobe;
 reg             clear_to_eol_strobe;
 reg             clear_screen_strobe;
+reg             clear_to_eos_strobe;
+reg             delete_line_strobe;
+reg             insert_line_strobe;
 reg             tty_enabled;
 reg             scroll_enabled;
+reg     [6:0]   source_line;
+reg     [6:0]   dest_line;
+reg             copy_write;
 wire            cursor_active;
 
 reg     [7:0]   fg_r;
@@ -245,8 +261,13 @@ begin
         tty_write_strobe <=1'd0;
         clear_to_eol_strobe <= 1'd0;
         clear_screen_strobe <= 1'd1;
+        clear_to_eos_strobe <= 1'd0;
+        delete_line_strobe <= 1'd0;
+        insert_line_strobe <= 1'd0;
         tty_enabled <= 1'd1;
         scroll_enabled <= 1'd1;
+     
+   
         fg_r <= 8'h80;
         fg_g <= 8'h80;
         fg_b <= 8'h80;
@@ -277,8 +298,11 @@ begin
         end
         else if(reg_addr_i==8'h08) clear_to_eol_strobe <= 1'd1;
         else if(reg_addr_i==8'h09) clear_screen_strobe <= 1'd1;
-        else if(reg_addr_i==8'h0a) tty_enabled = data_i_delay[0];
-        else if(reg_addr_i==8'h0b) scroll_enabled = data_i_delay[0];
+        else if(reg_addr_i==8'h0a) clear_to_eos_strobe <= 1'd1;
+        else if(reg_addr_i==8'h0b) delete_line_strobe <= 1'd1;
+        else if(reg_addr_i==8'h0c) insert_line_strobe <= 1'd1;
+        else if(reg_addr_i==8'h0d) tty_enabled = data_i_delay[0];
+        else if(reg_addr_i==8'h0e) scroll_enabled = data_i_delay[0];
         else if(reg_addr_i==8'h10) fg_r = data_i_delay;
         else if(reg_addr_i==8'h11) fg_g = data_i_delay;
         else if(reg_addr_i==8'h12) fg_b = data_i_delay;
@@ -294,6 +318,9 @@ begin
             tty_write_strobe <= 1'd0;
             clear_to_eol_strobe <= 1'd0;
             clear_screen_strobe <= 1'd0;
+            clear_to_eos_strobe <= 1'd0;
+            delete_line_strobe <= 1'd0;
+            insert_line_strobe <= 1'd0;
         end
     end
     else
@@ -305,6 +332,9 @@ begin
         tty_write_strobe <= 1'd0;
         clear_to_eol_strobe <= 1'd0;
         clear_screen_strobe <= 1'd0;
+        clear_to_eos_strobe <= 1'd0;
+        delete_line_strobe <= 1'd0;
+        insert_line_strobe <= 1'd0;
     end
 end
 
@@ -338,6 +368,9 @@ begin
         tty_clr_cnt <= 7'd0;
         tty_clr_y <= 5'd0;
         tty_wdata <= 7'd0;
+        source_line <= 6'd0;
+        dest_line <= 6'd0;
+        copy_write <= 1'd0;
     end
     else
     begin
@@ -349,6 +382,9 @@ begin
                 else if(tty_write_strobe && tty_enabled) tty_state <= WRITE_CHAR;
                 else if(clear_to_eol_strobe) tty_state <= CLEAR_TO_EOL_INIT;
                 else if(clear_screen_strobe) tty_state <= CLEAR_SCREEN_INIT;
+                else if(clear_to_eos_strobe) tty_state <= CLEAR_TO_EOS_INIT;
+                else if(delete_line_strobe) tty_state <= DELETE_LINE_INIT;
+                else if(insert_line_strobe) tty_state <= INSERT_LINE_INIT;
                 else tty_state <= IDLE;
                 
                 tty_we <= 1'd0;
@@ -473,6 +509,107 @@ begin
                     cursor_y <= 5'd0;
                 end
             end
+            CLEAR_TO_EOS_INIT:
+            begin
+                return_state <= CLEAR_TO_EOS_RUN;
+                tty_clr_y <= cursor_y;
+                tty_state <= CLEAR_TO_EOL_INIT;
+            end
+            CLEAR_TO_EOS_RUN:
+            begin
+                if(tty_clr_y < 5'd31)
+                begin
+                    cursor_x <= 0;
+                    return_state <= CLEAR_TO_EOS_RUN;
+                    tty_clr_y <= tty_clr_y + 1;
+                    cursor_y <= tty_clr_y - 1;
+                    tty_state <= CLEAR_TO_EOL_INIT;
+                end
+                else
+                begin
+                    tty_state <= IDLE;
+                end
+            end
+            DELETE_LINE_INIT:
+            begin
+                cursor_x <= 0;
+                tty_clr_y <= cursor_y;
+                tty_state <= DELETE_LINE_RUN;
+            end
+            DELETE_LINE_RUN:
+            begin
+                if(tty_clr_y < 5'd31)
+                begin
+                    dest_line <= tty_clr_y;
+                    source_line <= tty_clr_y+1;
+                    tty_clr_cnt <= 7'd0;
+                    return_state <= DELETE_LINE_RUN;
+                    tty_state <= COPY_LINE;
+                    tty_clr_y <= tty_clr_y + 1;
+                end
+                else
+                begin
+                    // Clear the last line
+                    cursor_x <= 0;
+                    cursor_y <= tty_clr_y;
+                    return_state <= IDLE;
+                    tty_state <= CLEAR_TO_EOL_INIT;
+                end
+            end
+            COPY_LINE:
+            begin
+                if(tty_clr_cnt < 7'd80)
+                begin
+                    if(!copy_write)
+                    begin
+                        // Read a byte from the source line
+                        tty_we <= 1'd0;
+                        tty_wdata <= 8'd0;
+                        tty_waddr <= {(source_line+start_y) % LINES, 4'd0}+{(source_line+start_y) % LINES, 6'd0}+tty_clr_cnt;
+                        tty_state <= COPY_LINE;
+                        copy_write <= 1'b1;
+                    end
+                    else
+                    begin
+                        // And write it to the destination line
+                        tty_we <= 1'd0;
+                        tty_wdata <= char;
+                        tty_waddr <= {(dest_line+start_y) % LINES, 4'd0}+{(dest_line+start_y) % LINES, 6'd0}+tty_clr_cnt;
+                        tty_state <= COPY_LINE;
+                        copy_write <= 1'b0;
+                    end
+                end
+                else
+                begin
+                    tty_we <= 1'd0;
+                    tty_state <= return_state;
+                end
+            end
+            INSERT_LINE_INIT:
+            begin
+                cursor_x <= 0;
+                tty_clr_y <= cursor_y;
+                tty_state <= INSERT_LINE_RUN;
+            end
+            INSERT_LINE_RUN:
+            begin
+                if(tty_clr_y < 5'd31)
+                begin
+                    dest_line <= tty_clr_y+1;
+                    source_line <= tty_clr_y;
+                    tty_clr_cnt <= 7'd0;
+                    return_state <= INSERT_LINE_RUN;
+                    tty_state <= COPY_LINE;
+                    tty_clr_y <= tty_clr_y + 1;
+                end
+                else
+                begin
+                    // Clear the original line
+                    cursor_x <= 0;
+                    return_state <= IDLE;
+                    tty_state <= CLEAR_TO_EOL_INIT;
+                end
+            end
             default: tty_state <= IDLE;
         endcase
     end
@@ -541,7 +678,7 @@ assign charbuf_addr = {scroll_y, 4'd0}+{scroll_y, 6'd0}+char_x;  // Y*80 + X
 assign charbuf_waddr = {scroll_line, 4'd0}+{scroll_line, 6'd0}+reg_addr_i[6:0];
 assign charbuf_xaddr = {scroll_line, 4'd0}+{scroll_line, 6'd0}+reg_addr_r_i[6:0];
 //assign tty_waddr = {(cursor_y+start_y) % LINES, 4'd0}+{(cursor_y+start_y) % LINES, 6'd0}+cursor_x;
-assign charbuf_raddr = tty_we ? tty_waddr : charbuf_addr;
+assign charbuf_raddr = (tty_we || tty_busy) ? tty_waddr : charbuf_addr;
 
 always @(posedge clk_vid_i)
     char_x_delay <= char_x;
