@@ -231,8 +231,8 @@ begin
     else if(reg_addr_i == 8'h01) data_o_reg <= {1'd0, cursor_x};
     else if(reg_addr_i == 8'h02) data_o_reg <= {3'd0, cursor_y};
     else if(reg_addr_i == 8'h03) data_o_reg <= {7'd0, cursor_visible};
-    else if(reg_addr_i == 8'h07) data_o_reg <= {7'd0, tty_busy};
-    else if(reg_addr_i == 8'h77) data_o_reg <= {7'd0, tty_busy};
+    else if(reg_addr_i == 8'h07) data_o_reg <= {7'd0, tty_busy_reg};
+    else if(reg_addr_i == 8'h77) data_o_reg <= {7'd0, tty_busy_reg};
     else if(reg_addr_i == 8'h0a) data_o_reg <= {7'd0, tty_enabled};
     else if(reg_addr_i == 8'h0b) data_o_reg <= {7'd0, scroll_enabled};
     else if(reg_addr_i == 8'h10) data_o_reg <= fg_r;
@@ -349,7 +349,9 @@ reg         tty_we;
 reg [11:0]  tty_waddr;
 reg         tty_scroll;
 reg [6:0]   tty_clr_cnt;
+//reg [6:0]   tty_rd_cnt;
 reg [4:0]   tty_clr_y;
+reg         tty_busy_reg;
 wire        tty_busy;
 
 assign tty_busy = (tty_state != IDLE);
@@ -366,14 +368,17 @@ begin
         tty_waddr <= 12'd0;
         tty_scroll <= 1'd0;
         tty_clr_cnt <= 7'd0;
+        //tty_rd_cnt <= 7'd0;
         tty_clr_y <= 5'd0;
         tty_wdata <= 7'd0;
         source_line <= 6'd0;
         dest_line <= 6'd0;
         copy_write <= 1'd0;
+        tty_busy_reg <= 1'd0;
     end
     else
     begin
+        tty_busy_reg <= tty_busy;
         case(tty_state)
             IDLE:
             begin
@@ -390,6 +395,7 @@ begin
                 tty_we <= 1'd0;
                 tty_scroll <= 1'd0;
                 tty_clr_cnt <= 7'd0;
+            
                 return_state <= IDLE;
             end
             WRITE_CHAR:
@@ -512,17 +518,17 @@ begin
             CLEAR_TO_EOS_INIT:
             begin
                 return_state <= CLEAR_TO_EOS_RUN;
-                tty_clr_y <= cursor_y;
+                tty_clr_y <= cursor_y+1;
                 tty_state <= CLEAR_TO_EOL_INIT;
             end
             CLEAR_TO_EOS_RUN:
             begin
-                if(tty_clr_y < 5'd31)
+                if(tty_clr_y < 5'd30)
                 begin
                     cursor_x <= 0;
                     return_state <= CLEAR_TO_EOS_RUN;
                     tty_clr_y <= tty_clr_y + 1;
-                    cursor_y <= tty_clr_y - 1;
+                    cursor_y <= tty_clr_y;
                     tty_state <= CLEAR_TO_EOL_INIT;
                 end
                 else
@@ -535,14 +541,16 @@ begin
                 cursor_x <= 0;
                 tty_clr_y <= cursor_y;
                 tty_state <= DELETE_LINE_RUN;
+                copy_write <= 1'b0;
             end
             DELETE_LINE_RUN:
             begin
-                if(tty_clr_y < 5'd31)
+                if(tty_clr_y < 5'd29)
                 begin
                     dest_line <= tty_clr_y;
                     source_line <= tty_clr_y+1;
                     tty_clr_cnt <= 7'd0;
+                    //tty_rd_cnt <= 7'd0;
                     return_state <= DELETE_LINE_RUN;
                     tty_state <= COPY_LINE;
                     tty_clr_y <= tty_clr_y + 1;
@@ -551,7 +559,7 @@ begin
                 begin
                     // Clear the last line
                     cursor_x <= 0;
-                    cursor_y <= tty_clr_y;
+                    cursor_y <= 5'd29;
                     return_state <= IDLE;
                     tty_state <= CLEAR_TO_EOL_INIT;
                 end
@@ -572,11 +580,12 @@ begin
                     else
                     begin
                         // And write it to the destination line
-                        tty_we <= 1'd0;
+                        tty_we <= 1'd1;
                         tty_wdata <= char;
-                        tty_waddr <= {(dest_line+start_y) % LINES, 4'd0}+{(dest_line+start_y) % LINES, 6'd0}+tty_clr_cnt;
+                        tty_waddr <= {(dest_line+start_y) % LINES, 4'd0}+{(dest_line+start_y) % LINES, 6'd0}+tty_clr_cnt-1;
                         tty_state <= COPY_LINE;
                         copy_write <= 1'b0;
+                        tty_clr_cnt <= tty_clr_cnt + 1;
                     end
                 end
                 else
@@ -588,19 +597,21 @@ begin
             INSERT_LINE_INIT:
             begin
                 cursor_x <= 0;
-                tty_clr_y <= cursor_y;
+                tty_clr_y <= 5'd29;
                 tty_state <= INSERT_LINE_RUN;
+                copy_write <= 1'b0;
             end
             INSERT_LINE_RUN:
             begin
-                if(tty_clr_y < 5'd31)
+                if(tty_clr_y > cursor_y)
                 begin
-                    dest_line <= tty_clr_y+1;
-                    source_line <= tty_clr_y;
+                    dest_line <= tty_clr_y;
+                    source_line <= tty_clr_y-1;
                     tty_clr_cnt <= 7'd0;
+                    //tty_rd_cnt <= 7'd0;
                     return_state <= INSERT_LINE_RUN;
                     tty_state <= COPY_LINE;
-                    tty_clr_y <= tty_clr_y + 1;
+                    tty_clr_y <= tty_clr_y - 1;
                 end
                 else
                 begin
