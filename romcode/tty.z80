@@ -16,6 +16,8 @@ tty_write_wait:
         
         ret
 
+; Using a delay instead of reading the busy flag
+; as there is some problem with the flag. Ugly but functional.
 tty_delay:
         ld a,0
 tty_delay_loop:

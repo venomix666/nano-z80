@@ -2,12 +2,10 @@
 
 ; SD boot
 ; Read boot sector and boot from sd card
-; Currently uses an offset 0x01000000 block to allow
-; using the same SD-card for nano6502 and nanoZ80
 sd_boot:
         call sd_init
         ; Read the boot sector
-        ld de, $0100
+        ld de, $0000
         ld bc, $0000
         call sd_set_sector
 
