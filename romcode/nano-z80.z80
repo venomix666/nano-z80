@@ -10,33 +10,16 @@
         ; Configure stack pointer
         ld sp, RAM_END
 init:
+        ; Delay before printing
+        call tty_delay
+        call tty_delay
+
         ; Print string with pointer
         ld hl, msg_boot
         call print_string
         ld hl, msg_ready
         call print_string
 
-        ; Turn on a LED, test code
-        ld a,IO_SELECT_LEDS
-        out (IO_BANK),a
-        ld a,$01
-        out (LEDS_REG),a
-
-        ; Turn on a GPIO output, test code
-        ld a,IO_SELECT_GPIO
-        out (IO_BANK),a
-        ld a,$01
-        out (GPIO_DIR1),a
-        out (GPIO_DATA1),a
-
-        ; Set the SD-card sector
-        ;ld de,$0100
-        ;ld bc,$0000
-        ;call sd_set_sector
-
-        ; Read the sector to addredd $E000
-        ;ld hl, $e000
-        ;call sd_read_sector
         ld hl, INPUT_BUF-1
         ld b,0
         jr input_loop
@@ -67,8 +50,8 @@ input_loop:
         ; Decode input command
         cp 'M'
         jp z, monitor_memory_dump
-        cp 'L'
-        jp z, monitor_memory_load
+        ;cp 'L'
+        ;jp z, monitor_memory_load
         cp 'J'
         jp z, monitor_jump
         cp 'O'
@@ -77,7 +60,7 @@ input_loop:
         jp z, monitor_port_in
         cp 'B'
         jp z, monitor_boot
-        cp 'S'
+        cp 'L'
         jp z, monitor_sd_load
         cp 'W'
         jp z, monitor_memory_write
@@ -230,26 +213,6 @@ monitor_memory_dump_error:
         ld hl, msg_error
         jp print_string
 
-monitor_memory_load:
-        call read_char
-        ld l,a
-        call read_char
-        ld h,a
-        call read_char
-        ld c,a
-        call read_char
-        ld b,a
-monitor_memory_load_pos_1:
-        call read_char
-        ld (hl),a
-        inc hl
-        dec bc
-        ld a,b
-        or c
-        jr nz, monitor_memory_load_pos_1
-        ret
-
-
 ; Port dump
 ; C contains the port
 ; DE contains number of bytes to read
@@ -331,7 +294,16 @@ memory_dump_pos_5
         include "sdcard.z80"
 
 msg_boot:
-        db "nano-Z80 monitor v0.1",13,10,0
+        db "nano-Z80 monitor v0.2",13,10
+        db 13,10
+        db "Available commands:", 13,10
+        db "MAAAA,NNNN  - display NNNN bytes of memory at addresss AAAA", 13,10
+        db "WAAAA,DD    - write data DD to address AAAA", 13, 10
+        db "JAAAA       - jump to address AAAA", 13, 10
+        db "OPP,DD      - write data DD to IO port PP", 13, 10
+        db "IPP,NN      - read NN bytes from IO port PP", 13, 10
+        db "B           - boot from the SD card", 13, 10
+        db "L           - load image from the SD card without booting",13, 10, 0
 msg_ready:
         db "Ready",13,10,0
 msg_invalid_command:

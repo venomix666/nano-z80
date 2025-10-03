@@ -22,6 +22,6 @@ tty_delay:
         ld a,0
 tty_delay_loop:
         inc a
-        cp a, 20
+        cp a, 50
         jr nz, tty_delay_loop
         ret
