@@ -35,10 +35,10 @@ In order to set up the external PLL on the Tang Nano 20K for generation of the 2
 ### Program the FPGA
 If you don't want to synthesize the project yourself, you can download the [bitstream file](https://github.com/venomix666/nano-z80/releases/latest/download/nano-z80.fs) and program it to the FPGA configuration flash memory using [openFPGAloader](https://github.com/trabucayre/openFPGALoader):  
 ```console
-openFPGAloader -b tangnano20k -f ./nano6502.fs
+openFPGAloader -b tangnano20k -f ./nano-z80.fs
 ```
 ### Prepare the SD card
-Write the [nano6502.img](https://github.com/venomix666/nano-z80/releases/latest/download/nano-z80.img) file into the SD-card using `dd` or your preferred SD-card image writer. 
+Write the [nano-z80.img](https://github.com/venomix666/nano-z80/releases/latest/download/nano-z80.img) file into the SD-card using `dd` or your preferred SD-card image writer. 
 
 ## Peripherals and IO model
 In order to maximize the amount of available IO ports, a simple banked IO model is used.   
