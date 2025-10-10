@@ -13,7 +13,8 @@
 // 07       -   {2'b00, game_sta, game_sel, game_y, game_x, game_b, game_a}
 // 08       -   New USB report 
 // 09       -   Device type - 0: no device, 1: keyboard, 2: mouse, 3: gamepad
-// 0a       -   Error signal 
+// 0a       -   Error signal
+// 0b       -   Arrow key configuration (0: ADM3A, 1: WordStar, 2: EMACS/MINCE) 
 
 module usb_interface(
 	input               clk_i,
@@ -62,6 +63,9 @@ reg             [22:0]  key2_rpt_cnt;
 
 reg             new_key_next;
 
+reg             [1:0]   arrow_key_conf;
+reg             [7:0]   arrow_key_constants [15:0];
+
 localparam      FIRST_REPEAT = 23'd8000000;
 localparam      REPEAT_RATE = 23'd1200000;
 
@@ -80,6 +84,7 @@ begin
         8'h08: data_o_reg = {7'd0, report_reg};
         8'h09: data_o_reg = {6'd0, typ};
         8'h0a: data_o_reg = {7'd0, conerr};
+        8'h0b: data_o_reg = {6'd0, arrow_key_conf};
         8'h74: data_o_reg = {7'd0, new_key};
         8'h75: data_o_reg = keyascii;
         default:
@@ -90,6 +95,45 @@ begin
 end
 
 assign data_o = data_o_reg;
+
+// Register writing
+always @(posedge clk_i or negedge rst_n_i)
+begin
+    if(rst_n_i == 1'b0)
+    begin
+        arrow_key_conf <= 2'd0;
+        // Setup arrow key constants
+        
+        // ADM-3A
+        arrow_key_constants[0] = 8'd12;
+        arrow_key_constants[1] = 8'd8;
+        arrow_key_constants[2] = 8'd10;
+        arrow_key_constants[3] = 8'd11;
+
+        // WordStar
+        arrow_key_constants[4] = 8'd4;
+        arrow_key_constants[5] = 8'd19;
+        arrow_key_constants[6] = 8'd24;
+        arrow_key_constants[7] = 8'd5;
+
+        // EMACS / MINCE
+        arrow_key_constants[8] = 8'd6;
+        arrow_key_constants[9] = 8'd2;
+        arrow_key_constants[10] = 8'd14;
+        arrow_key_constants[11] = 8'd16;
+
+        // ADM-3A duplicate to avoid undefined values
+        arrow_key_constants[12] = 8'd12;
+        arrow_key_constants[13] = 8'd8;
+        arrow_key_constants[14] = 8'd10;
+        arrow_key_constants[15] = 8'd11;
+
+    end
+    else if((!wr_n) && (usb_cs) && (reg_addr_i==8'h0b))
+    begin
+        arrow_key_conf <= data_i[1:0];
+    end
+end
 
 // Latch data when new USB report comes
 always @(posedge clkusb_i or negedge rst_n_i)
@@ -117,12 +161,20 @@ begin
         1: begin // Keyboard
 
             if (key1 !=0 && key1 != key_active[0] && key1 != key_active[1]) begin
-                keydown <= key1; keyascii <= scancode2char(key1, key_modifiers);
+                keydown <= key1; keyascii <= scancode2char(key1, key_modifiers, 
+                                                           arrow_key_constants[{arrow_key_conf, 2'd0}], 
+                                                           arrow_key_constants[{arrow_key_conf, 2'd1}], 
+                                                           arrow_key_constants[{arrow_key_conf, 2'd2}], 
+                                                           arrow_key_constants[{arrow_key_conf, 2'd3}]);
                 new_key_set <= 1'b1;
                 key1_rpt_cnt <= FIRST_REPEAT;
             end
             else if (key2 !=0 && key2 != key_active[0] && key2 != key_active[1]) begin
-                keydown <= key2; keyascii <= scancode2char(key2, key_modifiers);
+                keydown <= key2; keyascii <= scancode2char(key2, key_modifiers, 
+                                                           arrow_key_constants[{arrow_key_conf, 2'd0}], 
+                                                           arrow_key_constants[{arrow_key_conf, 2'd1}], 
+                                                           arrow_key_constants[{arrow_key_conf, 2'd2}], 
+                                                           arrow_key_constants[{arrow_key_conf, 2'd3}]);
                 new_key_set <= 1'b1;
                 key2_rpt_cnt <= FIRST_REPEAT;
             end
@@ -146,7 +198,11 @@ begin
             key1_rpt_cnt <= key1_rpt_cnt - 1;
             if(key1_rpt_cnt == 23'd0) begin
                 keydown <= key_active[0];
-                keyascii <= scancode2char(key_active[0], key_modifiers);
+                keyascii <= scancode2char(key_active[0], key_modifiers,
+                                          arrow_key_constants[{arrow_key_conf, 2'd0}], 
+                                          arrow_key_constants[{arrow_key_conf, 2'd1}], 
+                                          arrow_key_constants[{arrow_key_conf, 2'd2}], 
+                                          arrow_key_constants[{arrow_key_conf, 2'd3}]);
                 new_key_set <= 1'b1;
                 key1_rpt_cnt <= REPEAT_RATE;
             end
@@ -156,7 +212,11 @@ begin
             key2_rpt_cnt <= key2_rpt_cnt - 1;
             if(key2_rpt_cnt == 23'd0) begin
                 keydown <= key_active[1];
-                keyascii <= scancode2char(key_active[1], key_modifiers);
+                keyascii <= scancode2char(key_active[1], key_modifiers,
+                                          arrow_key_constants[{arrow_key_conf, 2'd0}], 
+                                          arrow_key_constants[{arrow_key_conf, 2'd1}], 
+                                          arrow_key_constants[{arrow_key_conf, 2'd2}], 
+                                          arrow_key_constants[{arrow_key_conf, 2'd3}]);
                 new_key_set <= 1'b1;
                 key2_rpt_cnt <= REPEAT_RATE;
             end
@@ -237,7 +297,7 @@ endmodule
 
 localparam [7:0] SHIFT_MASK = 8'b00100010;
 localparam [7:0] CTRL_MASK = 8'b00010001;
-function [7:0] scancode2char(input [7:0] scancode, input [7:0] modifiers); 
+function [7:0] scancode2char(input [7:0] scancode, input [7:0] modifiers, input [7:0] right, input [7:0] left, input [7:0] down, input [7:0] up); 
     reg [7:0] a;
     if (scancode >= 4 && scancode <= 29) begin   // a-z
         if (modifiers == 0)
@@ -276,10 +336,10 @@ function [7:0] scancode2char(input [7:0] scancode, input [7:0] modifiers);
             55: a = ".";        // .
             56: a = "/";        // /
             57: ;               // caps lock
-            79: a = 137;        // Right arrow
-            80: a = 136;        // Left arrow
-            81: a = 138;        // Down arrow
-            82: a = 139;        // Up arrow
+            79: a = right; //137;        // Right arrow
+            80: a = left; //136;        // Left arrow
+            81: a = down; //138;        // Down arrow
+            82: a = up; //139;        // Up arrow
         endcase
     end if ((modifiers & SHIFT_MASK) && (modifiers & ~SHIFT_MASK) == 0) begin
         // shift down
