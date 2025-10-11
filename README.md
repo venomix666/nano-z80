@@ -14,7 +14,7 @@ Current features:
 
 Everything is clocked of the pixel clock, so the Z80-core is running at 25.175 MHz.
 
-A port of David Given's [CP/Mish](https://github.com/venomix666/cpmish/tree/nanoZ80) gives a very nice CP/M 2.2 environment for this computer. See the cpmish page for more details. Here are some screenshots:
+A port of David Given's [CP/Mish](https://github.com/davidgiven/cpmish) gives a very nice CP/M 2.2 environment for this computer. See the [cpmish page](https://github.com/davidgiven/cpmish/blob/master/arch/nano-z80/README.md) for more details. Here are some screenshots:
 
 <img src="https://github.com/user-attachments/assets/8a74a47b-7cd5-410c-bc62-b158b1f7f0e4" width=320>
 <img src="https://github.com/user-attachments/assets/3edb0d60-d8a0-4273-ac66-0d46e5ade73b" width=320>
