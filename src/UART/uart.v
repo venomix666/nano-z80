@@ -64,14 +64,24 @@ reg                             tx_b_done;
 reg [7:0]                       data_b_o_reg;
 reg [2:0]                       uart_b_baud;
 
+// RX buffers and index
+
+reg [7:0]                       rx_buffer [255:0];
+reg [7:0]                       rx_buffer_r;
+reg [7:0]                       rx_buffer_w;
+
+reg [7:0]                       rx_buffer_b [255:0];
+reg [7:0]                       rx_buffer_b_r;
+reg [7:0]                       rx_buffer_b_w;
+reg                             uart_cs_prev;
+
 always@(posedge clk or negedge rst_n)
 begin
     if(rst_n == 1'b0)
     begin
         tx_data <= 8'h00;
         tx_done <= 1'b1;
-        tx_data_valid <= 1'b0;
-        
+        tx_data_valid <= 1'b0;        
     end
     // TX handling
     else if(tx_data_valid && tx_data_ready) 
@@ -125,7 +135,8 @@ begin
     else
     begin
         tx_b_data_valid <= 1'b0;
-    end 
+    end
+    
 end
 
 always@(*)
@@ -144,44 +155,64 @@ begin
         endcase
 end
 
+always@(posedge clk)
+begin
+    uart_cs_prev <= uart_cs;
+end
 
 always@(posedge clk or negedge rst_n)
 begin
     if(rst_n == 1'b0)
     begin
         rx_data_reg <= 8'd0;
-        rx_data_avail <= 1'b0;
+        //rx_data_avail <= 1'b0;
+        rx_buffer_r <= 8'd0;
+        rx_buffer_w <= 8'd0;
     end
     // Latch rx data and status
     else if(rx_data_valid)
     begin
-        rx_data_reg <= rx_data;
-        rx_data_avail <= 1'b1;
+        //rx_data_reg <= rx_data;
+        //rx_data_avail <= 1'b1;
+        rx_buffer[rx_buffer_w] <= rx_data;
+        rx_buffer_w <= rx_buffer_w + 1;
     end
-    else if((reg_addr == 4'b0010) && (uart_cs))
+    else if((reg_addr == 4'b0010) && (uart_cs) && (!uart_cs_prev) && (rx_data_avail))
     begin
-        rx_data_avail <= 1'b0;
+        //rx_data_avail <= 1'b0;
+        rx_data_reg <= rx_buffer[rx_buffer_r];
+        rx_buffer_r <= rx_buffer_r + 1;
     end
 end
+
+assign rx_data_avail = (rx_buffer_r != rx_buffer_w);
 
 always@(posedge clk or negedge rst_n)
 begin
     if(rst_n == 1'b0)
     begin
         rx_b_data_reg <= 8'd0;
-        rx_b_data_avail <= 1'b0;
+        rx_buffer_b_r <= 8'd0;
+        rx_buffer_b_w <= 8'd0;
+        //rx_b_data_avail <= 1'b0;
     end
     // Latch rx data and status
     else if(rx_b_data_valid)
     begin
-        rx_b_data_reg <= rx_b_data;
-        rx_b_data_avail <= 1'b1;
+        //rx_b_data_reg <= rx_b_data;
+        //rx_b_data_avail <= 1'b1;
+        rx_buffer_b[rx_buffer_b_w] <= rx_b_data;
+        rx_buffer_b_w <= rx_buffer_b_w + 1;
     end
-    else if((reg_addr == 4'b0110) && (uart_cs))
+    else if((reg_addr == 4'b0110) && (uart_cs) && (!uart_cs_prev) && (rx_b_data_avail))
     begin
-        rx_b_data_avail <= 1'b0;
+        //rx_b_data_avail <= 1'b0;
+        rx_b_data_reg <= rx_buffer_b[rx_buffer_b_r];
+        rx_buffer_b_r <= rx_buffer_b_r + 1;
     end
 end
+
+assign rx_b_data_avail = (rx_buffer_b_r != rx_buffer_b_w);
 
 assign data_o = data_o_reg;
 
