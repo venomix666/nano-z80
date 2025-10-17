@@ -3,10 +3,9 @@
 tty_write:
         push af
 tty_write_wait:
-        call tty_delay
-        ;in a, (TTY_BUSY_AVAIL)
-        ;or a
-        ;jr nz, tty_write_wait
+        in a, (TTY_BUSY_AVAIL)
+        or a
+        jr nz, tty_write_wait
        
         ; Get character from stack
         pop af
@@ -16,12 +15,3 @@ tty_write_wait:
         
         ret
 
-; Using a delay instead of reading the busy flag
-; as there is some problem with the flag. Ugly but functional.
-tty_delay:
-        ld a,0
-tty_delay_loop:
-        inc a
-        cp a, 50
-        jr nz, tty_delay_loop
-        ret

@@ -227,6 +227,7 @@ always @(*) begin
         else if(gpio_cs == 1'b1) cpu_data_i = gpio_data_o;
         else if(usb_cs == 1'b1) cpu_data_i = usb_data_o;
         else if(sd_cs == 1'b1) cpu_data_i = sd_data_o;
+        else if(video_cs == 1'b1) cpu_data_i = video_data_o;
         else if(addr_dec_cs == 1'b1) cpu_data_i = addr_dec_data_o;
         else cpu_data_i = cpu_data_o;
 end
