@@ -10,10 +10,6 @@
         ; Configure stack pointer
         ld sp, RAM_END
 init:
-        ; Delay before printing
-        call tty_delay
-        call tty_delay
-
         ; Print string with pointer
         ld hl, msg_boot
         call print_string
