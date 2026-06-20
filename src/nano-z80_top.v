@@ -3,15 +3,15 @@
 // A general purpose Z80 computer designed primarily for use with
 // the Tang Nano 20K board.
 //
-// Planned features for first version:
+// Features:
 // Text mode video output, 80 columns, over HDMI
-// 64K block ram
+// 8192k of SDRAM ram, divided into four pageable regions
 // ROM which can be switched out
 // SDCARD file access
 // UART
 // USB keyboard support
 //
-// Copyright (C) 2025 Henrik Löfgren
+// Copyright (C) 2026 Henrik Löfgren
 
 module nanoz80_top
 (
@@ -33,7 +33,18 @@ module nanoz80_top
     inout           sdcmd,
     inout [3:0]     sddat,
     inout           usb_dp,
-    inout           usb_dm
+    inout           usb_dm,
+    // Magic SDRAM pin names
+    output O_sdram_clk,                                                        
+    output O_sdram_cke,                                                        
+    output O_sdram_cs_n,            // chip select                             
+    output O_sdram_cas_n,           // columns address select                  
+    output O_sdram_ras_n,           // row address select                      
+    output O_sdram_wen_n,           // write enable                            
+    inout [31:0] IO_sdram_dq,       // 32 bit bidirectional data bus           
+    output [10:0] O_sdram_addr,     // 11 bit multiplexed address bus          
+    output [1:0] O_sdram_ba,        // two banks                               
+    output [3:0] O_sdram_dqm        // 32/4        
 );
 
 wire            mreq_n;
@@ -50,6 +61,7 @@ wire    [7:0]   gpio_data_o;
 wire    [7:0]   usb_data_o;
 wire    [7:0]   sd_data_o;
 wire    [7:0]   video_data_o;
+wire    [7:0]   mmu_data_o;
 wire    [7:0]   addr_dec_data_o;
 
 reg     [7:0]   cpu_data_i;
@@ -68,6 +80,7 @@ wire            gpio_cs;
 wire            usb_cs;
 wire            sd_cs;
 wire            video_cs;
+wire            mmu_cs;
 wire            addr_dec_cs;
 
 wire    [7:0]   ledwire;
@@ -78,6 +91,21 @@ assign leds[3] = ~ledwire[3];
 assign leds[2] = ~ledwire[2];
 assign leds[1] = ~ledwire[1];
 assign leds[0] = ~ledwire[0];
+
+wire   [8:0]    high_addr;
+
+// SDRAM clocks
+wire clk50;
+wire clk50_p;
+
+// PLL to generate SDRAM clocks
+Gowin_rPLL sdram_pll(
+        .clkout(clk50), //output clkout
+        .clkoutp(clk50_p), //output clkoutp
+        .clkin(clk_i) //input clkin
+);
+
+wire wait_n;
 
 tv80s CPU(
     // Outputs
@@ -94,7 +122,7 @@ tv80s CPU(
     // Inputs
     .reset_n(rst_n), 
     .clk(clk_i), 
-    .wait_n(1'b1), 
+    .wait_n(wait_n), 
     .int_n(1'b1), 
     .nmi_n(1'b1), 
     .busrq_n(1'b1), 
@@ -108,14 +136,79 @@ bootrom bootrom_inst(
     .data(rom_data_o)
 );
  
-instram main_ram(
+/*instram main_ram(
     .clk(clk_i),
     .adr(cpu_addr),
     .rwn(wr_n),
     .cs(ram_cs),
     .data_i(cpu_data_o),
     .data_o(ram_data_o)
+);*/
+
+/*mem mem_inst(                                                                  
+    .clk_i(clk_i),                                                             
+    .clk_mem(clk50),                                                           
+    .clk_sdram(clk50_p),                                                       
+    .rst_n_i(rst_n),                                                           
+    .wr_n(wr_n),                                                               
+    .rd_n(rd_n),                                                               
+    .cpu_addr_i(cpu_addr),                                                     
+    .high_addr_i(high_addr),                                                   
+    .data_i(cpu_data_o),                                                       
+    .data_o(ram_data_o),                                                       
+    .ram_cs(ram_cs),                                                           
+    .wait_n(wait_n),                                                           
+    .O_sdram_clk(O_sdram_clk),                                                 
+    .O_sdram_cke(O_sdram_cke),                                                 
+    .O_sdram_cs_n(O_sdram_cs_n),                                               
+    .O_sdram_cas_n(O_sdram_cas_n),                                             
+    .O_sdram_ras_n(O_sdram_ras_n),                                             
+    .O_sdram_wen_n(O_sdram_wen_n),                                             
+    .IO_sdram_dq(IO_sdram_dq),                                                 
+    .O_sdram_addr(O_sdram_addr),                                               
+    .O_sdram_ba(O_sdram_ba),                                                   
+    .O_sdram_dqm(O_sdram_dqm)                                                  
+);*/                                                                             
+
+sdram_z80_interface sdram_z80_interface_inst(
+    .clk_50(clk50),
+    .reset_n(rst_n),
+    .addr_i(cpu_addr),
+    .data_i(cpu_data_o),
+    .data_o(ram_data_o),
+    .mreq_n(mreq_n),
+    .rd_n(rd_n),
+    .wr_n(wr_n),
+    .wait_n(wait_n),
+    .ram_cs(ram_cs),
+
+
+    .sd_clk(O_sdram_clk),                                        
+    .sd_cke(O_sdram_cke),                                                 
+    .sd_cs_n(O_sdram_cs_n),                                               
+    .sd_cas_n(O_sdram_cas_n),                                             
+    .sd_ras_n(O_sdram_ras_n),                                             
+    .sd_we_n(O_sdram_wen_n),                                             
+    .sd_dqm(O_sdram_dqm),                                                 
+    .sd_a(O_sdram_addr),                                               
+    .sd_ba(O_sdram_ba),                                                   
+    .sd_dq(IO_sdram_dq),
+
+    .current_bank_reg(high_addr)
 );
+         
+                                                                  
+mmu mmu_inst(                                                                  
+    .clk_i(clk_i),                                                             
+    .rst_n_i(rst_n),                                                           
+    .wr_n(wr_n),                                                               
+    .reg_addr_i(cpu_addr[2:0]),                                                
+    .data_i(cpu_data_o),                                                       
+    .addr_i(cpu_addr),                                                         
+    .mmu_cs(mmu_cs),                                                           
+    .data_o(mmu_data_o),                                                       
+    .high_addr_o(high_addr)                                                    
+);  
 
 uart uart_inst(
         .clk(clk_i),
@@ -148,6 +241,7 @@ addr_decoder addr_dec(
     .sd_cs(sd_cs),
     .rom_cs(rom_cs),
     .video_cs(video_cs),
+    .mmu_cs(mmu_cs),
     .addr_dec_cs(addr_dec_cs)
 );
 
@@ -228,6 +322,7 @@ always @(*) begin
         else if(usb_cs == 1'b1) cpu_data_i = usb_data_o;
         else if(sd_cs == 1'b1) cpu_data_i = sd_data_o;
         else if(video_cs == 1'b1) cpu_data_i = video_data_o;
+        else if(mmu_cs == 1'b1) cpu_data_i = mmu_data_o;
         else if(addr_dec_cs == 1'b1) cpu_data_i = addr_dec_data_o;
         else cpu_data_i = cpu_data_o;
 end

@@ -1,0 +1,27 @@
+; Basic memory test routine for the nano-Z80
+
+MEM_START       equ $2000       ; Only test non-ROM area for now
+MEM_STOP        equ $FF00       ; Stay away from buffers and stack
+
+mem_test:
+        ; Write the address to all locations, to test page faults
+        ld HL, MEM_START
+
+mem_test_write:
+        ld (HL),H
+        inc HL
+        ld (HL),L
+        inc HL
+        
+        ld BC, MEM_STOP
+        ld A, B
+        cp H
+        jp nz, mem_test_write
+        ld A, C
+        cp L
+        jp nz, mem_test_write
+mem_test_read:
+
+        ; Read back the address from all locations, print errors 
+        ret
+

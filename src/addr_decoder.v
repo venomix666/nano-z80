@@ -26,6 +26,7 @@ module addr_decoder(
     output              usb_cs,
     output              sd_cs,
     output              video_cs,
+    output              mmu_cs,
     output              addr_dec_cs
 );
 
@@ -40,6 +41,7 @@ reg         gpio_cs_reg;
 reg         usb_cs_reg;
 reg         sd_cs_reg;
 reg         video_cs_reg;
+reg         mmu_cs_reg;
 reg         addr_dec_cs_reg;
 reg         rom_disable;
 
@@ -71,6 +73,7 @@ always @(*) begin
     usb_cs_reg <= 1'b0;
     sd_cs_reg <= 1'b0;
     video_cs_reg <= 1'b0;
+    mmu_cs_reg <= 1'b0;
     addr_dec_cs_reg <= 1'b0;
 
     // Memory requests
@@ -78,7 +81,7 @@ always @(*) begin
     else if(mreq_n == 1'b0) ram_cs_reg <= 1'b1;
 
     // IO requests
-    if(ioreq_n == 1'b0 && (addr_i[7:0] < 8'h70 || addr_i[7:0] > 8'h7f))
+    if(ioreq_n == 1'b0 && (addr_i[7:0] < 8'h60 || addr_i[7:0] > 8'h7f))
     begin
         case(io_bank)
             8'h00: led_cs_reg <= 1'b1;
@@ -90,6 +93,8 @@ always @(*) begin
             default: led_cs_reg <= 1'b0;
         endcase
     end
+    else if(ioreq_n == 1'b0 && addr_i[7:0] > 8'h5f && addr_i[7:0] < 8'h68)     
+        mmu_cs_reg <= 1'b1;  
     else if(ioreq_n == 1'b0 && addr_i[7:0] > 8'h6f && addr_i[7:0] < 8'h74)
         uart_cs_reg <= 1'b1; // Always access UART registers
     else if(ioreq_n == 1'b0 && addr_i[7:0] > 8'h73 && addr_i[7:0] < 8'h76)
@@ -119,6 +124,7 @@ assign usb_cs = usb_cs_reg;
 assign sd_cs = sd_cs_reg;
 assign rom_cs = rom_cs_reg;
 assign video_cs = video_cs_reg;
+assign mmu_cs = mmu_cs_reg;
 assign addr_dec_cs = addr_dec_cs_reg;
 
 endmodule

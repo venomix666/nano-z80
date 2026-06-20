@@ -46,8 +46,8 @@ input_loop:
         ; Decode input command
         cp 'M'
         jp z, monitor_memory_dump
-        ;cp 'L'
-        ;jp z, monitor_memory_load
+        cp 'T'
+        jp z, monitor_memory_test
         cp 'J'
         jp z, monitor_jump
         cp 'O'
@@ -209,6 +209,12 @@ monitor_memory_dump_error:
         ld hl, msg_error
         jp print_string
 
+; Monitor memory test
+; Run simple RAM test routine to debug SDRAM errors
+monitor_memory_test:
+        call mem_test
+        ret
+
 ; Port dump
 ; C contains the port
 ; DE contains number of bytes to read
@@ -288,7 +294,7 @@ memory_dump_pos_5
         include "print.z80"
         include "read.z80"
         include "sdcard.z80"
-
+        include "memtest.z80"
 msg_boot:
         db "nano-Z80 monitor v0.2",13,10
         db 13,10
@@ -299,7 +305,8 @@ msg_boot:
         db "OPP,DD      - write data DD to IO port PP", 13, 10
         db "IPP,NN      - read NN bytes from IO port PP", 13, 10
         db "B           - boot from the SD card", 13, 10
-        db "L           - load image from the SD card without booting",13, 10, 0
+        db "L           - load image from the SD card without booting",13, 10
+        db "T           - run memory test",13,10,0
 msg_ready:
         db "Ready",13,10,0
 msg_invalid_command:
