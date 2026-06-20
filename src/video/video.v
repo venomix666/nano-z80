@@ -673,6 +673,11 @@ wire    [7:0]   charbuf_data_o;
 wire    [11:0]  charbuf_addr;
 wire    [11:0]  charbuf_waddr;
 wire    [11:0]  charbuf_raddr;
+
+wire    [7:0]   video_out_r;
+wire    [7:0]   video_out_g;
+wire    [7:0]   video_out_b;
+
 //wire    [11:0]   tty_waddr;
 wire    [7:0]   char_cur;
 reg     [6:0]   char_x_delay;
@@ -730,6 +735,54 @@ assign char_cur[6:0] = char[6:0];
 assign char_cur[7] = (cursor_active && (char_x_delay == cursor_x) && (char_y == cursor_y)) ? ~char[7] : char[7];
 assign font_out = char_cur[7] ? ~font_data[7'd7-font_x] : font_data[7'd7-font_x];
 
+
+// Video memory for graphics mode 320x200 bytes (40 empty lines above and below?)
+// Port A connects to CPU, Port B to video generator
+    vbuf_dpram video_mem(
+        .douta(douta), //output [7:0] douta
+        .doutb(doutb), //output [7:0] doutb
+        .clka(clk_i), //input clka
+        .ocea(1'b1), //input ocea
+        .cea(1'b1), //input cea
+        .reseta(1'b0), //input reseta
+        .wrea(1'b0), //input wrea
+        .clkb(clk_vid_i), //input clkb
+        .oceb(1'b1), //input oceb
+        .ceb(1'b1), //input ceb
+        .resetb(1'b0), //input resetb
+        .wreb(wreb), //input wreb
+        .ada(ada), //input [15:0] ada
+        .dina(dina), //input [7:0] dina
+        .adb(adb), //input [15:0] adb
+        .dinb(dinb) //input [7:0] dinb
+    );
+
+// Palette memory
+    pal_dpram pal_mem(
+        .douta(douta), //output [23:0] douta
+        .doutb(doutb), //output [23:0] doutb
+        .clka(clka), //input clka
+        .ocea(ocea), //input ocea
+        .cea(cea), //input cea
+        .reseta(reseta), //input reseta
+        .wrea(wrea), //input wrea
+        .clkb(clkb), //input clkb
+        .oceb(oceb), //input oceb
+        .ceb(ceb), //input ceb
+        .resetb(resetb), //input resetb
+        .wreb(wreb), //input wreb
+        .ada(ada), //input [7:0] ada
+        .dina(dina), //input [23:0] dina
+        .adb(adb), //input [7:0] adb
+        .dinb(dinb) //input [23:0] dinb
+    );
+
+assign video_out_r = font_out ? fg_r : bg_r;
+assign video_out_g = font_out ? fg_g : bg_g;
+assign video_out_b = font_out ? fg_b : bg_b;
+
+
+
 fontrom fontrom_inst(
     .clk(clk_i),
     .adr(font_addr),
@@ -742,9 +795,9 @@ DVI_TX_Top dvi_tx(
 		.I_rgb_vs(dvi_vs), //input I_rgb_vs
 		.I_rgb_hs(dvi_hs), //input I_rgb_hs
 		.I_rgb_de(dvi_de), //input I_rgb_de
-		.I_rgb_r(font_out ? fg_r : bg_r), //input [7:0] I_rgb_r {font_out, 7'd0}
-		.I_rgb_g(font_out ? fg_g : bg_g), //input [7:0] I_rgb_g
-		.I_rgb_b(font_out ? fg_b : bg_b), //input [7:0] I_rgb_b
+		.I_rgb_r(video_out_r), //input [7:0] I_rgb_r {font_out, 7'd0}
+		.I_rgb_g(video_out_g), //input [7:0] I_rgb_g
+		.I_rgb_b(video_out_b), //input [7:0] I_rgb_b
 		.O_tmds_clk_p(tmds_clk_p_o), //output O_tmds_clk_p
 		.O_tmds_clk_n(tmds_clk_n_o), //output O_tmds_clk_n
 		.O_tmds_data_p(tmds_data_p_o), //output [2:0] O_tmds_data_p
