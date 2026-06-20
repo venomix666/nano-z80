@@ -2,7 +2,7 @@
 Z80 based SoC for the [Tang Nano 20k FPGA Board](https://wiki.sipeed.com/hardware/en/tang/tang-nano-20k/nano-20k.html) which is designed to run CP/M. It reuses many IP-blocks from my [nano6502](https://github.com/venomix666/nano6502/) project which is very similar but is built around a 6502-core instead of a Z80.
 
 Current features:
-* 64 k RAM (currently implemented with block RAM)
+* 8192 k RAM, banked in four 16k banks
 * 8k ROM which can be switched out (also block RAM)
 * SD card storage
 * UART (on the built in USB-C connector)
@@ -51,6 +51,14 @@ The IO select register (port 0x7f) performs banking of the IO ports and can be s
 0x05: UART selected.  
 
 In addition to the banked port, the following ports are always available:  
+0x60: MMU bank 0 LSB (8 bits) (0x0000-0x3FFF)  
+0x61: MMU bank 0 MSB (1 bits) (0x0000-0x3FFF)  
+0x62: MMU bank 1 LSB (8 bits) (0x4000-0x7FFF)  
+0x63: MMU bank 1 MSB (1 bits) (0x4000-0x7FFF)  
+0x64: MMU bank 2 LSB (8 bits) (0x8000-0xBFFF)  
+0x65: MMU bank 2 MSB (1 bits) (0x8000-0xBFFF)  
+0x66: MMU bank 3 LSB (8 bits) (0xC000-0xFFFF)  
+0x67: MMU bank 3 MSB (1 bits) (0xC000-0xFFFF)  
 0x70: UART A TX data  
 0x71: UART A TX ready  
 0x72: UART A RX data  
