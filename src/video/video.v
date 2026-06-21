@@ -1,4 +1,4 @@
-// Text mode video generation for the nano6502
+// Video generation for the nano-Z80
 //
 // Sync generation is based on the example from Gowin Semi.
 //
@@ -34,6 +34,7 @@
 // 27       - Palette R
 // 28       - Palette G
 // 29       - Palette B
+// 2A       - Vblank, output only, for sync
 // 80-CF    - Line data
 
 // 640x480 info:
@@ -264,6 +265,7 @@ begin
     else if(reg_addr_i == 8'h27) data_o_reg <= palmem_out[7:0];
     else if(reg_addr_i == 8'h28) data_o_reg <= palmem_out[15:8];
     else if(reg_addr_i == 8'h29) data_o_reg <= palmem_out[23:16];
+    else if(reg_addr_i == 8'h2a) data_o_reg <= {7'd0, vblank};
     else if(reg_addr_i[7] && (reg_addr_i[6:0] < 80)) data_o_reg <= charbuf_data_o;
     else data_o_reg <= 8'd0;
 end
@@ -831,6 +833,9 @@ reg         wpixel_inc;
 
 wire [15:0] wpixel_addr;
 wire [15:0] page_offset;
+
+wire        vblank;
+
 assign pixel_y_offset = V_cnt-12'd35;
 assign pixel_x_offset = H_cnt-12'd147;
 assign pixel_x = pixel_x_offset[9:2];
@@ -842,6 +847,9 @@ assign pixel_addr = page_offset + {pixel_y, 7'd0} + {pixel_y, 5'd0} + pixel_x;
 
 // Only support 160x120 for now
 assign wpixel_addr = {wpixel_y, 7'd0} + {wpixel_y, 5'd0} + wpixel_x;
+
+// Vertical blanking signal for sync
+assign vblank = ((V_cnt < 12'd35) | (V_cnt > 12'd515)) ? 1'b1 : 1'b0;
 
 // Video memory for graphics mode,  320x200 bytes for double buffering of 160x120 (could be optimized)
 // Port A connects to CPU, Port B to video generator
