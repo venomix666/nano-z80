@@ -22,3 +22,5 @@
 -write_mode_1 normal
 -speed false
 -reset_mode sync
+-init_file /home/venomix/gowinide/Projects/nano-z80/src/def_pal.mi
+-init_match port_A
