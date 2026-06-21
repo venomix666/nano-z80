@@ -24,6 +24,16 @@
 // 13       - BG Red
 // 14       - BG Green
 // 15       - BG Blue
+// 20       - Video mode (0: 640x480 80 column text, 1: 160x100 8-bit graphics, 2: 320x200 8 bit graphics, 3: 640x480 1 bit?)
+// 21       - Pixel Y (Page 2 starts on line 100 in 160x100)
+// 22       - Pixel X LSB
+// 23       - Pixel X MSB (ignored in 160x100 mode)
+// 24       - Pixel data (auto-increment on write?)
+// 25       - Video page (0 or 1), only used in 160x100 graphics for double buffering
+// 26       - Palette color (0-255)
+// 27       - Palette R
+// 28       - Palette G
+// 29       - Palette B
 // 80-CF    - Line data
 
 // 640x480 info:
@@ -222,6 +232,9 @@ reg     [7:0]   bg_g;
 reg     [7:0]   bg_b;
 
 
+reg     [1:0]   video_mode;
+
+
 always @(posedge clk_i) data_i_delay <= data_i;
 always @(posedge clk_i) data_i_d_delay <= data_i_delay;
 
@@ -241,6 +254,11 @@ begin
     else if(reg_addr_i == 8'h13) data_o_reg <= bg_r;
     else if(reg_addr_i == 8'h14) data_o_reg <= bg_g;
     else if(reg_addr_i == 8'h15) data_o_reg <= bg_b;
+    else if(reg_addr_i == 8'h20) data_o_reg <= {6'd0, video_mode};
+    else if(reg_addr_i == 8'h26) data_o_reg <= pal_color;
+    else if(reg_addr_i == 8'h27) data_o_reg <= palmem_out[7:0];
+    else if(reg_addr_i == 8'h28) data_o_reg <= palmem_out[15:8];
+    else if(reg_addr_i == 8'h29) data_o_reg <= palmem_out[23:16];
     else if(reg_addr_i[7] && (reg_addr_i[6:0] < 80)) data_o_reg <= charbuf_data_o;
     else data_o_reg <= 8'd0;
 end
@@ -266,6 +284,7 @@ begin
         insert_line_strobe <= 1'd0;
         tty_enabled <= 1'd1;
         scroll_enabled <= 1'd1;
+        
      
    
         fg_r <= 8'h80;
@@ -274,6 +293,12 @@ begin
         bg_r <= 8'h00;
         bg_g <= 8'h00;
         bg_b <= 8'h00;
+    
+        video_mode <= 2'd0;
+
+        pal_write <= 1'd0;
+        pal_color <= 8'd0;
+    
     end
     else if(!R_W_n && video_cs)
     begin
@@ -309,6 +334,20 @@ begin
         else if(reg_addr_i==8'h13) bg_r = data_i_delay;
         else if(reg_addr_i==8'h14) bg_g = data_i_delay;
         else if(reg_addr_i==8'h15) bg_b = data_i_delay;
+        else if(reg_addr_i==8'h20) video_mode = data_i_delay[1:0];
+        else if(reg_addr_i==8'h26) pal_color = data_i_delay;
+        else if(reg_addr_i==8'h27) begin
+                palmem_in = {palmem_out[23:8], data_i_delay};
+                pal_write <= 1'd1;
+        end
+        else if(reg_addr_i==8'h28) begin
+                palmem_in = {palmem_out[23:16], data_i_delay, palmem_out[7:0]};
+                pal_write <= 1'd1;
+        end
+        else if(reg_addr_i==8'h29) begin
+                palmem_in = {data_i_delay, palmem_out[15:0]};
+                pal_write <= 1'd1;
+        end
         else
         begin
             scroll_up <= 1'd0;
@@ -321,6 +360,7 @@ begin
             clear_to_eos_strobe <= 1'd0;
             delete_line_strobe <= 1'd0;
             insert_line_strobe <= 1'd0;
+            pal_write <= 1'd0;
         end
     end
     else
@@ -335,6 +375,7 @@ begin
         clear_to_eos_strobe <= 1'd0;
         delete_line_strobe <= 1'd0;
         insert_line_strobe <= 1'd0;
+        pal_write <= 1'd0;
     end
 end
 
@@ -736,11 +777,31 @@ assign char_cur[7] = (cursor_active && (char_x_delay == cursor_x) && (char_y == 
 assign font_out = char_cur[7] ? ~font_data[7'd7-font_x] : font_data[7'd7-font_x];
 
 
+// Graphics mode stuff
+
+wire [7:0] vmem_out;
+wire [7:0] pixel_data;
+
+wire [15:0] pixel_addr;
+
+wire [7:0]  pixel_y;
+wire [8:0]  pixel_x;
+wire [11:0]  pixel_y_offset;
+wire [11:0]  pixel_x_offset;
+
+
+assign pixel_y_offset = V_cnt-12'd35;
+assign pixel_x_offset = H_cnt-12'd148;
+assign pixel_x = pixel_x_offset[9:2];
+assign pixel_y = pixel_y_offset[9:2];
+
+assign pixel_addr = {pixel_y, 7'd0} + {pixel_y, 5'd0} + pixel_x;
+
 // Video memory for graphics mode 320x200 bytes (40 empty lines above and below?)
 // Port A connects to CPU, Port B to video generator
     vbuf_dpram video_mem(
-        .douta(douta), //output [7:0] douta
-        .doutb(doutb), //output [7:0] doutb
+        .douta(vmem_out), //output [7:0] douta
+        .doutb(pixel_data), //output [7:0] doutb
         .clka(clk_i), //input clka
         .ocea(1'b1), //input ocea
         .cea(1'b1), //input cea
@@ -750,38 +811,43 @@ assign font_out = char_cur[7] ? ~font_data[7'd7-font_x] : font_data[7'd7-font_x]
         .oceb(1'b1), //input oceb
         .ceb(1'b1), //input ceb
         .resetb(1'b0), //input resetb
-        .wreb(wreb), //input wreb
-        .ada(ada), //input [15:0] ada
-        .dina(dina), //input [7:0] dina
-        .adb(adb), //input [15:0] adb
-        .dinb(dinb) //input [7:0] dinb
+        .wreb(1'b0), //input wreb
+        .ada(15'd0), //input [15:0] ada
+        .dina(7'd0), //input [7:0] dina
+        .adb(pixel_addr), //input [15:0] adb
+        .dinb(7'd0) //input [7:0] dinb
     );
+
+wire [23:0] palmem_out;
+wire [23:0] color_out;
+reg [23:0]  palmem_in;
+
+reg         pal_write;
+reg [7:0]   pal_color;
 
 // Palette memory
     pal_dpram pal_mem(
-        .douta(douta), //output [23:0] douta
-        .doutb(doutb), //output [23:0] doutb
-        .clka(clka), //input clka
-        .ocea(ocea), //input ocea
-        .cea(cea), //input cea
-        .reseta(reseta), //input reseta
-        .wrea(wrea), //input wrea
-        .clkb(clkb), //input clkb
-        .oceb(oceb), //input oceb
-        .ceb(ceb), //input ceb
-        .resetb(resetb), //input resetb
-        .wreb(wreb), //input wreb
-        .ada(ada), //input [7:0] ada
-        .dina(dina), //input [23:0] dina
-        .adb(adb), //input [7:0] adb
-        .dinb(dinb) //input [23:0] dinb
+        .douta(palmem_out), //output [23:0] douta
+        .doutb(color_out), //output [23:0] doutb
+        .clka(clk_i), //input clka
+        .ocea(1'b1), //input ocea
+        .cea(1'b1), //input cea
+        .reseta(1'b0), //input reseta
+        .wrea(pal_write), //input wrea
+        .clkb(clk_vid_i), //input clkb
+        .oceb(1'b1), //input oceb
+        .ceb(1'b1), //input ceb
+        .resetb(1'b0), //input resetb
+        .wreb(1'b0), //input wreb
+        .ada(pal_color), //input [7:0] ada
+        .dina(palmem_in), //input [23:0] dina
+        .adb(pixel_data), //input [7:0] adb
+        .dinb(23'd0) //input [23:0] dinb
     );
 
-assign video_out_r = font_out ? fg_r : bg_r;
-assign video_out_g = font_out ? fg_g : bg_g;
-assign video_out_b = font_out ? fg_b : bg_b;
-
-
+assign video_out_r = (video_mode == 2'd0) ? (font_out ? fg_r : bg_r) : color_out[7:0];
+assign video_out_g = (video_mode == 2'd0) ? (font_out ? fg_g : bg_g) : color_out[15:8];
+assign video_out_b = (video_mode == 2'd0) ? (font_out ? fg_b : bg_b) : color_out[23:16];
 
 fontrom fontrom_inst(
     .clk(clk_i),
