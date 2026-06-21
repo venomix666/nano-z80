@@ -24,12 +24,12 @@
 // 13       - BG Red
 // 14       - BG Green
 // 15       - BG Blue
-// 20       - Video mode (0: 640x480 80 column text, 1: 160x100 8-bit graphics, 2 and 3 not implemented)
-// 21       - Pixel Y (Page 2 starts on line 100 in 160x100)
+// 20       - Video mode (0: 640x480 80 column text, 1: 160x120 8-bit graphics, 2 and 3 not implemented)
+// 21       - Pixel Y (Page 2 starts on line 120 in 160x120)
 // 22       - Pixel X LSB
-// 23       - Pixel X MSB (ignored in 160x100 mode, in place for future support for hi-res modes)
+// 23       - Pixel X MSB (ignored in 160x120 mode, in place for future support for hi-res modes)
 // 24       - Pixel data (auto-increments on write)
-// 25       - Video page (0 or 1), only used in 160x100 graphics for double buffering
+// 25       - Video page (0 or 1), only used in 160x120 graphics for double buffering
 // 26       - Palette color (0-255)
 // 27       - Palette R
 // 28       - Palette G
@@ -401,7 +401,7 @@ begin
         if(wpixel_inc == 1'b1) begin
             if(wpixel_x == 9'd159) begin
                 wpixel_x <= 9'd0;
-                if(wpixel_y == 8'd199) wpixel_y <= 8'd0;
+                if(wpixel_y == 8'd239) wpixel_y <= 8'd0;
                 else wpixel_y <= wpixel_y + 1;
             end 
             else begin 
@@ -830,19 +830,20 @@ reg [7:0]   vmem_in;
 reg         wpixel_inc;
 
 wire [15:0] wpixel_addr;
-
+wire [15:0] page_offset;
 assign pixel_y_offset = V_cnt-12'd35;
-assign pixel_x_offset = H_cnt-12'd148;
+assign pixel_x_offset = H_cnt-12'd147;
 assign pixel_x = pixel_x_offset[9:2];
 assign pixel_y = pixel_y_offset[9:2];
 
-// Only support 160x100 for now
-assign pixel_addr = {vpage, 15'd0} + {pixel_y, 7'd0} + {pixel_y, 5'd0} + pixel_x;
+// Only support 160x120 for now
+assign page_offset = (vpage == 1'b0) ? 16'h0000 : 16'h4B00;
+assign pixel_addr = page_offset + {pixel_y, 7'd0} + {pixel_y, 5'd0} + pixel_x;
 
-// Only support 160x100 for now
+// Only support 160x120 for now
 assign wpixel_addr = {wpixel_y, 7'd0} + {wpixel_y, 5'd0} + wpixel_x;
 
-// Video memory for graphics mode,  320x200 bytes for double buffering of 160x100
+// Video memory for graphics mode,  320x200 bytes for double buffering of 160x120 (could be optimized)
 // Port A connects to CPU, Port B to video generator
     vbuf_dpram video_mem(
         .douta(vmem_out), //output [7:0] douta
