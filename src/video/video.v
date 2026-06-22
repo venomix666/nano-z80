@@ -1,4 +1,4 @@
-// Text mode video generation for the nano6502
+// Video generation for the nano-Z80
 //
 // Sync generation is based on the example from Gowin Semi.
 //
@@ -24,6 +24,17 @@
 // 13       - BG Red
 // 14       - BG Green
 // 15       - BG Blue
+// 20       - Video mode (0: 640x480 80 column text, 1: 160x120 8-bit graphics, 2 and 3 not implemented)
+// 21       - Pixel Y (Page 2 starts on line 120 in 160x120)
+// 22       - Pixel X LSB
+// 23       - Pixel X MSB (ignored in 160x120 mode, in place for future support for hi-res modes)
+// 24       - Pixel data (auto-increments on write)
+// 25       - Video page (0 or 1), only used in 160x120 graphics for double buffering
+// 26       - Palette color (0-255)
+// 27       - Palette R
+// 28       - Palette G
+// 29       - Palette B
+// 2A       - Vblank, output only, for sync
 // 80-CF    - Line data
 
 // 640x480 info:
@@ -222,6 +233,9 @@ reg     [7:0]   bg_g;
 reg     [7:0]   bg_b;
 
 
+reg     [1:0]   video_mode;
+
+
 always @(posedge clk_i) data_i_delay <= data_i;
 always @(posedge clk_i) data_i_d_delay <= data_i_delay;
 
@@ -241,6 +255,17 @@ begin
     else if(reg_addr_i == 8'h13) data_o_reg <= bg_r;
     else if(reg_addr_i == 8'h14) data_o_reg <= bg_g;
     else if(reg_addr_i == 8'h15) data_o_reg <= bg_b;
+    else if(reg_addr_i == 8'h20) data_o_reg <= {6'd0, video_mode};
+    else if(reg_addr_i == 8'h21) data_o_reg <= wpixel_y;
+    else if(reg_addr_i == 8'h22) data_o_reg <= wpixel_x[7:0];
+    else if(reg_addr_i == 8'h23) data_o_reg <= {7'd0, wpixel_x[8]};
+    else if(reg_addr_i == 8'h24) data_o_reg <= vmem_out;
+    else if(reg_addr_i == 8'h25) data_o_reg <= {7'd0, vpage};
+    else if(reg_addr_i == 8'h26) data_o_reg <= pal_color;
+    else if(reg_addr_i == 8'h27) data_o_reg <= palmem_out[7:0];
+    else if(reg_addr_i == 8'h28) data_o_reg <= palmem_out[15:8];
+    else if(reg_addr_i == 8'h29) data_o_reg <= palmem_out[23:16];
+    else if(reg_addr_i == 8'h2a) data_o_reg <= {7'd0, vblank};
     else if(reg_addr_i[7] && (reg_addr_i[6:0] < 80)) data_o_reg <= charbuf_data_o;
     else data_o_reg <= 8'd0;
 end
@@ -266,14 +291,26 @@ begin
         insert_line_strobe <= 1'd0;
         tty_enabled <= 1'd1;
         scroll_enabled <= 1'd1;
-     
-   
+        
         fg_r <= 8'h80;
         fg_g <= 8'h80;
         fg_b <= 8'h80;
         bg_r <= 8'h00;
         bg_g <= 8'h00;
         bg_b <= 8'h00;
+    
+        video_mode <= 2'd0;
+
+        pal_write <= 1'd0;
+        pal_color <= 8'd0;
+    
+        vpage <= 1'd0;
+
+        wpixel_x <= 9'd0;
+        wpixel_y <= 8'd0;
+        pixel_write <= 1'd0;
+        wpixel_inc <= 1'd0;
+
     end
     else if(!R_W_n && video_cs)
     begin
@@ -309,6 +346,29 @@ begin
         else if(reg_addr_i==8'h13) bg_r = data_i_delay;
         else if(reg_addr_i==8'h14) bg_g = data_i_delay;
         else if(reg_addr_i==8'h15) bg_b = data_i_delay;
+        else if(reg_addr_i==8'h20) video_mode <= data_i_delay[1:0];
+        else if(reg_addr_i==8'h21) wpixel_y <= data_i_delay;
+        else if(reg_addr_i==8'h22) wpixel_x[7:0] <= data_i_delay;
+        else if(reg_addr_i==8'h23) wpixel_x[8] <= data_i_delay[0];
+        else if(reg_addr_i==8'h24) begin
+                vmem_in <= data_i_delay;
+                pixel_write <= 1'd1;   
+                wpixel_inc <= 1'd1;
+        end
+        else if(reg_addr_i==8'h25) vpage = data_i_delay[0];
+        else if(reg_addr_i==8'h26) pal_color = data_i_delay;
+        else if(reg_addr_i==8'h27) begin
+                palmem_in <= {palmem_out[23:8], data_i_delay};
+                pal_write <= 1'd1;
+        end
+        else if(reg_addr_i==8'h28) begin
+                palmem_in <= {palmem_out[23:16], data_i_delay, palmem_out[7:0]};
+                pal_write <= 1'd1;
+        end
+        else if(reg_addr_i==8'h29) begin
+                palmem_in <= {data_i_delay, palmem_out[15:0]};
+                pal_write <= 1'd1;
+        end
         else
         begin
             scroll_up <= 1'd0;
@@ -321,6 +381,9 @@ begin
             clear_to_eos_strobe <= 1'd0;
             delete_line_strobe <= 1'd0;
             insert_line_strobe <= 1'd0;
+            pal_write <= 1'd0;
+            pixel_write <= 1'd0;
+
         end
     end
     else
@@ -335,6 +398,19 @@ begin
         clear_to_eos_strobe <= 1'd0;
         delete_line_strobe <= 1'd0;
         insert_line_strobe <= 1'd0;
+        pal_write <= 1'd0;
+        pixel_write <= 1'd0;
+        if(wpixel_inc == 1'b1) begin
+            if(wpixel_x == 9'd159) begin
+                wpixel_x <= 9'd0;
+                if(wpixel_y == 8'd239) wpixel_y <= 8'd0;
+                else wpixel_y <= wpixel_y + 1;
+            end 
+            else begin 
+                wpixel_x <= wpixel_x + 1;
+            end
+            wpixel_inc <= 1'b0;
+        end
     end
 end
 
@@ -673,6 +749,11 @@ wire    [7:0]   charbuf_data_o;
 wire    [11:0]  charbuf_addr;
 wire    [11:0]  charbuf_waddr;
 wire    [11:0]  charbuf_raddr;
+
+wire    [7:0]   video_out_r;
+wire    [7:0]   video_out_g;
+wire    [7:0]   video_out_b;
+
 //wire    [11:0]   tty_waddr;
 wire    [7:0]   char_cur;
 reg     [6:0]   char_x_delay;
@@ -730,6 +811,98 @@ assign char_cur[6:0] = char[6:0];
 assign char_cur[7] = (cursor_active && (char_x_delay == cursor_x) && (char_y == cursor_y)) ? ~char[7] : char[7];
 assign font_out = char_cur[7] ? ~font_data[7'd7-font_x] : font_data[7'd7-font_x];
 
+
+// Graphics mode stuff
+
+wire [7:0] vmem_out;
+wire [7:0] pixel_data;
+
+wire [15:0] pixel_addr;
+
+wire [7:0]  pixel_y;
+wire [8:0]  pixel_x;
+wire [11:0]  pixel_y_offset;
+wire [11:0]  pixel_x_offset;
+
+reg [7:0]   wpixel_y;
+reg [8:0]   wpixel_x;
+reg         vpage;
+reg         pixel_write;
+reg [7:0]   vmem_in;
+reg         wpixel_inc;
+
+wire [15:0] wpixel_addr;
+wire [15:0] page_offset;
+
+wire        vblank;
+
+assign pixel_y_offset = V_cnt-12'd35;
+assign pixel_x_offset = H_cnt-12'd147;
+assign pixel_x = pixel_x_offset[9:2];
+assign pixel_y = pixel_y_offset[9:2];
+
+// Only support 160x120 for now
+assign page_offset = (vpage == 1'b0) ? 16'h0000 : 16'h4B00;
+assign pixel_addr = page_offset + {pixel_y, 7'd0} + {pixel_y, 5'd0} + pixel_x;
+
+// Only support 160x120 for now
+assign wpixel_addr = {wpixel_y, 7'd0} + {wpixel_y, 5'd0} + wpixel_x;
+
+// Vertical blanking signal for sync
+assign vblank = ((V_cnt < 12'd35) | (V_cnt > 12'd515)) ? 1'b1 : 1'b0;
+
+// Video memory for graphics mode,  320x200 bytes for double buffering of 160x120 (could be optimized)
+// Port A connects to CPU, Port B to video generator
+    vbuf_dpram video_mem(
+        .douta(vmem_out), //output [7:0] douta
+        .doutb(pixel_data), //output [7:0] doutb
+        .clka(clk_i), //input clka
+        .ocea(1'b1), //input ocea
+        .cea(1'b1), //input cea
+        .reseta(1'b0), //input reseta
+        .wrea(pixel_write), //input wrea
+        .clkb(clk_vid_i), //input clkb
+        .oceb(1'b1), //input oceb
+        .ceb(1'b1), //input ceb
+        .resetb(1'b0), //input resetb
+        .wreb(1'b0), //input wreb
+        .ada(wpixel_addr), //input [15:0] ada
+        .dina(vmem_in), //input [7:0] dina
+        .adb(pixel_addr), //input [15:0] adb
+        .dinb(7'd0) //input [7:0] dinb
+    );
+
+wire [23:0] palmem_out;
+wire [23:0] color_out;
+reg [23:0]  palmem_in;
+
+reg         pal_write;
+reg [7:0]   pal_color;
+
+// Palette memory
+    pal_dpram pal_mem(
+        .douta(palmem_out), //output [23:0] douta
+        .doutb(color_out), //output [23:0] doutb
+        .clka(clk_i), //input clka
+        .ocea(1'b1), //input ocea
+        .cea(1'b1), //input cea
+        .reseta(1'b0), //input reseta
+        .wrea(pal_write), //input wrea
+        .clkb(clk_vid_i), //input clkb
+        .oceb(1'b1), //input oceb
+        .ceb(1'b1), //input ceb
+        .resetb(1'b0), //input resetb
+        .wreb(1'b0), //input wreb
+        .ada(pal_color), //input [7:0] ada
+        .dina(palmem_in), //input [23:0] dina
+        .adb(pixel_data), //input [7:0] adb
+        .dinb(23'd0) //input [23:0] dinb
+    );
+
+assign video_out_r = (video_mode == 2'd0) ? (font_out ? fg_r : bg_r) : color_out[7:0];
+assign video_out_g = (video_mode == 2'd0) ? (font_out ? fg_g : bg_g) : color_out[15:8];
+assign video_out_b = (video_mode == 2'd0) ? (font_out ? fg_b : bg_b) : color_out[23:16];
+
 fontrom fontrom_inst(
     .clk(clk_i),
     .adr(font_addr),
@@ -742,9 +915,9 @@ DVI_TX_Top dvi_tx(
 		.I_rgb_vs(dvi_vs), //input I_rgb_vs
 		.I_rgb_hs(dvi_hs), //input I_rgb_hs
 		.I_rgb_de(dvi_de), //input I_rgb_de
-		.I_rgb_r(font_out ? fg_r : bg_r), //input [7:0] I_rgb_r {font_out, 7'd0}
-		.I_rgb_g(font_out ? fg_g : bg_g), //input [7:0] I_rgb_g
-		.I_rgb_b(font_out ? fg_b : bg_b), //input [7:0] I_rgb_b
+		.I_rgb_r(video_out_r), //input [7:0] I_rgb_r {font_out, 7'd0}
+		.I_rgb_g(video_out_g), //input [7:0] I_rgb_g
+		.I_rgb_b(video_out_b), //input [7:0] I_rgb_b
 		.O_tmds_clk_p(tmds_clk_p_o), //output O_tmds_clk_p
 		.O_tmds_clk_n(tmds_clk_n_o), //output O_tmds_clk_n
 		.O_tmds_data_p(tmds_data_p_o), //output [2:0] O_tmds_data_p

@@ -6,7 +6,8 @@ Current features:
 * 8k ROM which can be switched out (also block RAM)
 * SD card storage
 * UART (on the built in USB-C connector)
-* 80-column text mode HDMI video output, 640x480 60 Hz (80x30 characters)  
+* 80-column text mode HDMI video output, 640x480 60 Hz (80x30 characters)
+* 160x120 8 bit color grapics mode, double buffered with 24 bit palette.
 * USB keyboard support (with [nanoComp](https://github.com/venomix666/nanoComp/) carrier board)  
 * Bidirectional GPIO on the header on the nanoComp carrier board
 * Control of the LEDs on the Tang Nano 20k board
@@ -20,7 +21,7 @@ A port of David Given's [CP/Mish](https://github.com/davidgiven/cpmish) gives a 
 <img src="https://github.com/user-attachments/assets/3edb0d60-d8a0-4273-ac66-0d46e5ade73b" width=320>
 <img src="https://github.com/user-attachments/assets/b4cd34e4-e134-46d5-9724-2d2eaca2829b" width=320>
 <img src="https://github.com/user-attachments/assets/0e108a81-7ccb-4e55-ad49-cf99b76fd4ff" width=320>
-
+<img src="https://github.com/user-attachments/assets/e606e621-4f7a-4e66-8223-0a5d371e3908" width=320>
 
 ## Gettings started
 
@@ -129,7 +130,18 @@ In addition to the banked port, the following ports are always available:
 0x12:  Foreground Blue  
 0x13:  Background Red  
 0x14:  Background Green  
-0x15:  Background Blue  
+0x15:  Background Blue
+0x20:  Video mode - 0x00 = text mode, 0x01 = graphics mode 160x120x8  
+0x21:  Pixel Y (page 2 starts at line 120)  
+0x22:  Pixel X LSB  
+0x23:  Pixel X MSB (not used in 160x120, reserved for future hires modes)  
+0x24:  Pixel data (auto-increments to next pixel on write)
+0x25:  Video page (0 or 1)
+0x26:  Palette color (0-255)
+0x27:  Palette Red
+0x28:  Palette Green
+0x29:  Palette Blue
+0x2A:  Vblank, output only, for synchronization
 0x80 - 0xff: Active line data, for direct access  
 
 ### UART ports (0x7f == 0x05)
@@ -144,7 +156,8 @@ In addition to the banked port, the following ports are always available:
 0x08:  Baudrate UART B - 0: 4800, 1: 9600, 2: 19200, 3: 38400, 4: 57600, 5: 115200  
 
 ### Known bugs
-* Direct writing / reading to the video memory is glitchy due to some timing issue in the FPGA.
+* Direct writing / reading to the video memory in text mode
+ is glitchy due to some timing issue in the FPGA.
 
 ### Credits
 Some parts in this project are reused from other projects:  
