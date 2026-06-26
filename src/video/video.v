@@ -24,11 +24,11 @@
 // 13       - BG Red
 // 14       - BG Green
 // 15       - BG Blue
-// 20       - Video mode (0: 640x480 80 column text, 1: 160x120 8-bit graphics, 2 and 3 not implemented)
+// 20       - Video mode (0: 640x480 80 column text, 1: 160x120 8-bit graphics, 2: 320x200 8-bit graphics)
 // 21       - Pixel Y (Page 2 starts on line 120 in 160x120)
 // 22       - Pixel X LSB
-// 23       - Pixel X MSB (ignored in 160x120 mode, in place for future support for hi-res modes)
-// 24       - Pixel data (auto-increments on write)
+// 23       - Pixel X MSB (ignored in 160x120 mode)
+// 24       - Pixel data (auto-increments pixel address on write)
 // 25       - Video page (0 or 1), only used in 160x120 graphics for double buffering
 // 26       - Palette color (0-255)
 // 27       - Palette R
@@ -401,9 +401,9 @@ begin
         pal_write <= 1'd0;
         pixel_write <= 1'd0;
         if(wpixel_inc == 1'b1) begin
-            if(wpixel_x == 9'd159) begin
+            if((wpixel_x == 9'd159 && video_mode == 2'd1) || (wpixel_x == 9'd319 && video_mode == 2'd2)) begin
                 wpixel_x <= 9'd0;
-                if(wpixel_y == 8'd239) wpixel_y <= 8'd0;
+                if((wpixel_y == 8'd239 && video_mode == 2'd1) || (wpixel_y == 8'd200 && video_mode == 2'd2)) wpixel_y <= 8'd0;
                 else wpixel_y <= wpixel_y + 1;
             end 
             else begin 
@@ -838,15 +838,17 @@ wire        vblank;
 
 assign pixel_y_offset = V_cnt-12'd35;
 assign pixel_x_offset = H_cnt-12'd147;
-assign pixel_x = pixel_x_offset[9:2];
-assign pixel_y = pixel_y_offset[9:2];
+assign pixel_x = (video_mode == 2'b10) ? pixel_x_offset[9:1] : pixel_x_offset[9:2];
+assign pixel_y = (video_mode == 2'b10) ? pixel_y_offset[9:1] : pixel_y_offset[9:2];
 
-// Only support 160x120 for now
+// 2 pages in 160x120, 1 page in 320x200
 assign page_offset = (vpage == 1'b0) ? 16'h0000 : 16'h4B00;
-assign pixel_addr = page_offset + {pixel_y, 7'd0} + {pixel_y, 5'd0} + pixel_x;
+assign pixel_addr = (video_mode == 2'b10) ? {pixel_y-20, 8'd0} + {pixel_y-20, 6'd0} + pixel_x : 
+                                           page_offset + {pixel_y, 7'd0} + {pixel_y, 5'd0} + pixel_x;
 
-// Only support 160x120 for now
-assign wpixel_addr = {wpixel_y, 7'd0} + {wpixel_y, 5'd0} + wpixel_x;
+// 2 pages in 160x120, 1 page in 320x200
+assign wpixel_addr = (video_mode == 2'b10) ? {wpixel_y, 8'd0} + {wpixel_y, 6'd0} + wpixel_x : 
+                                           {wpixel_y, 7'd0} + {wpixel_y, 5'd0} + wpixel_x;
 
 // Vertical blanking signal for sync
 assign vblank = ((V_cnt < 12'd35) | (V_cnt > 12'd515)) ? 1'b1 : 1'b0;
@@ -899,9 +901,9 @@ reg [7:0]   pal_color;
         .dinb(23'd0) //input [23:0] dinb
     );
 
-assign video_out_r = (video_mode == 2'd0) ? (font_out ? fg_r : bg_r) : color_out[7:0];
-assign video_out_g = (video_mode == 2'd0) ? (font_out ? fg_g : bg_g) : color_out[15:8];
-assign video_out_b = (video_mode == 2'd0) ? (font_out ? fg_b : bg_b) : color_out[23:16];
+assign video_out_r = (video_mode == 2'd0) ? (font_out ? fg_r : bg_r) : ((video_mode == 2'd2 && (pixel_y < 20 || pixel_y >220)) ? 8'd0 : color_out[7:0]);
+assign video_out_g = (video_mode == 2'd0) ? (font_out ? fg_g : bg_g) : ((video_mode == 2'd2 && (pixel_y < 20 || pixel_y >220)) ? 8'd0 : color_out[15:8]);
+assign video_out_b = (video_mode == 2'd0) ? (font_out ? fg_b : bg_b) : ((video_mode == 2'd2 && (pixel_y < 20 || pixel_y >220)) ? 8'd0 : color_out[23:16]);
 
 fontrom fontrom_inst(
     .clk(clk_i),
