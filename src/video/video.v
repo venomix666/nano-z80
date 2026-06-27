@@ -531,7 +531,8 @@ begin
                             cursor_y <= cursor_y;
                             if(scroll_enabled) tty_scroll <= 1'd1;
                             return_state <= IDLE;
-                            tty_state <= CLEAR_TO_EOL_INIT;
+                            if(scroll_enabled) tty_state <= CLEAR_TO_EOL_INIT;
+                            else tty_state = IDLE;
                         end
                     end
                 end
