@@ -327,6 +327,17 @@ init_im2_loop:
         inc hl
         ld (hl), >(timer_isr)
 
+        ld a, IO_SELECT_PIC
+        out (IO_BANK), a
+        ld a, $01
+        out (PIC_IRQ_ENABLE), a
+        out (PIC_IRQ0_VECTOR), a
+
+        ld a, IO_SELECT_TIMER
+        out (IO_BANK), a
+        ld a, $01
+        out (TIMER_ENABLE), a
+
         ld a, VECT_HIGH
         ld i, a
         im 2
