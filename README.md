@@ -7,7 +7,8 @@ Current features:
 * SD card storage
 * UART (on the built in USB-C connector)
 * 80-column text mode HDMI video output, 640x480 60 Hz (80x30 characters)
-* 160x120 8 bit color grapics mode, double buffered with 24 bit palette.
+* 160x120 8 bit color grapics mode, double buffered with 24 bit palette
+* 320x200 8 bit color graphics mode with 24 bit palette
 * USB keyboard support (with [nanoComp](https://github.com/venomix666/nanoComp/) carrier board)  
 * Bidirectional GPIO on the header on the nanoComp carrier board
 * Control of the LEDs on the Tang Nano 20k board
@@ -131,12 +132,12 @@ In addition to the banked port, the following ports are always available:
 0x13:  Background Red  
 0x14:  Background Green  
 0x15:  Background Blue
-0x20:  Video mode - 0x00 = text mode, 0x01 = graphics mode 160x120x8  
-0x21:  Pixel Y (page 2 starts at line 120)  
+0x20:  Video mode - 0x00 Text mode, 0x01 160x120x8, 0x11 320x200x8, (0x10 is text mode with access to 320x200 buffer)    
+0x21:  Pixel Y (page 2 starts at line 120 for 160x120)  
 0x22:  Pixel X LSB  
-0x23:  Pixel X MSB (not used in 160x120, reserved for future hires modes)  
+0x23:  Pixel X MSB (not used in 160x120)  
 0x24:  Pixel data (auto-increments to next pixel on write)
-0x25:  Video page (0 or 1)
+0x25:  Video page (0 or 1), only used in 160x120 mode
 0x26:  Palette color (0-255)
 0x27:  Palette Red
 0x28:  Palette Green
