@@ -57,6 +57,20 @@ wire irq_pending = |irq_pending_mask;
 
 reg int_active;
 reg [7:0] int_select;
+reg [7:0] prio_irq;
+
+// Select irq with higher priority only
+always @(*) begin
+    prio_irq = 8'h00;
+    if      (irq_pending_mask[0]) prio_irq[0] = 1'b1;
+    else if (irq_pending_mask[1]) prio_irq[1] = 1'b1;
+    else if (irq_pending_mask[2]) prio_irq[2] = 1'b1;
+    else if (irq_pending_mask[3]) prio_irq[3] = 1'b1;
+    else if (irq_pending_mask[4]) prio_irq[4] = 1'b1;
+    else if (irq_pending_mask[5]) prio_irq[5] = 1'b1;
+    else if (irq_pending_mask[6]) prio_irq[6] = 1'b1;
+    else if (irq_pending_mask[7]) prio_irq[7] = 1'b1;
+end
 
 // Set interrupt flag to the CPU if any enabled input device requests an interrupt
 assign int_n_o = irq_pending ? 1'b0 : 1'b1;
@@ -64,7 +78,7 @@ assign int_n_o = irq_pending ? 1'b0 : 1'b1;
 // Generate vector output active signal
 assign vector_output = int_ack && int_active;
 
-// Generate irq acknowledge signals
+// Generate irq acknowledge signal
 assign irq_ack_o = (int_ack && int_active) ? int_select : 8'h00;
 
 always @(*)
@@ -142,7 +156,7 @@ begin
         interrupt_flags <= ~int_n_i;
         if(irq_pending) begin
             int_active <= 1'b1;
-            if(!int_active) int_select <= irq_pending_mask;
+            if(!int_active) int_select <= prio_irq;
         end
         else if(!int_ack) begin
             int_active <= 1'b0;
