@@ -177,40 +177,6 @@ bootrom bootrom_inst(
     .data(rom_data_o)
 );
  
-/*instram main_ram(
-    .clk(clk_i),
-    .adr(cpu_addr),
-    .rwn(wr_n),
-    .cs(ram_cs),
-    .data_i(cpu_data_o),
-    .data_o(ram_data_o)
-);*/
-
-/*mem mem_inst(                                                                  
-    .clk_i(clk_i),                                                             
-    .clk_mem(clk50),                                                           
-    .clk_sdram(clk50_p),                                                       
-    .rst_n_i(rst_n),                                                           
-    .wr_n(wr_n),                                                               
-    .rd_n(rd_n),                                                               
-    .cpu_addr_i(cpu_addr),                                                     
-    .high_addr_i(high_addr),                                                   
-    .data_i(cpu_data_o),                                                       
-    .data_o(ram_data_o),                                                       
-    .ram_cs(ram_cs),                                                           
-    .wait_n(wait_n),                                                           
-    .O_sdram_clk(O_sdram_clk),                                                 
-    .O_sdram_cke(O_sdram_cke),                                                 
-    .O_sdram_cs_n(O_sdram_cs_n),                                               
-    .O_sdram_cas_n(O_sdram_cas_n),                                             
-    .O_sdram_ras_n(O_sdram_ras_n),                                             
-    .O_sdram_wen_n(O_sdram_wen_n),                                             
-    .IO_sdram_dq(IO_sdram_dq),                                                 
-    .O_sdram_addr(O_sdram_addr),                                               
-    .O_sdram_ba(O_sdram_ba),                                                   
-    .O_sdram_dqm(O_sdram_dqm)                                                  
-);*/                                                                             
-
 sdram_z80_interface sdram_z80_interface_inst(
     .clk_50(clk50),
     .reset_n(rst_n),
