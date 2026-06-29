@@ -37,7 +37,8 @@ module pic(
     input               ioreq_n,
     input               m1_n,
     output [7:0]        data_o,
-    output reg          int_n_o
+    output reg          int_n_o,
+    output              vector_output
 );
 
 reg [7:0] interrupt_enable;
@@ -59,10 +60,12 @@ reg [7:0] int_select;
 // Set interrupt flag to the CPU if any enabled input device requests an interrupt
 assign int_n_o = irq_pending ? 1'b0 : 1'b1;
 
+assign vector_output = int_ack && int_active;
+
 always @(*)
 begin
         // Provide interrupt vector to data bus when needed
-        if(int_ack && int_active) 
+        if(vector_output) 
         begin
                 // Lower irq numbers have higher priority
                 if(int_select[0]) data_o_reg = interrupt_vector[0];

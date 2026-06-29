@@ -62,6 +62,7 @@ wire    [7:0]   usb_data_o;
 wire    [7:0]   sd_data_o;
 wire    [7:0]   video_data_o;
 wire    [7:0]   mmu_data_o;
+wire    [7:0]   pic_data_o;
 wire    [7:0]   addr_dec_data_o;
 
 reg     [7:0]   cpu_data_i;
@@ -81,6 +82,7 @@ wire            usb_cs;
 wire            sd_cs;
 wire            video_cs;
 wire            mmu_cs;
+wire            pic_cs;
 wire            addr_dec_cs;
 
 wire    [7:0]   ledwire;
@@ -108,6 +110,7 @@ Gowin_rPLL sdram_pll(
 wire wait_n;
 wire m1_n;
 wire int_n;
+wire vector_output;
 
 tv80s CPU(
     // Outputs
@@ -143,7 +146,8 @@ pic pic_inst(
     .ioreq_n(ioreq_n),
     .m1_n(m1_n),
     .data_o(pic_data_o),
-    .int_n_o(int_n)
+    .int_n_o(int_n),
+    .vector_output(vector_output)
 );
 
 bootrom bootrom_inst(
@@ -258,6 +262,7 @@ addr_decoder addr_dec(
     .rom_cs(rom_cs),
     .video_cs(video_cs),
     .mmu_cs(mmu_cs),
+    .pic_cs(pic_cs),
     .addr_dec_cs(addr_dec_cs)
 );
 
@@ -330,7 +335,8 @@ video video_inst(
 // CPU data input mux
 
 always @(*) begin
-        if(rom_cs == 1'b1) cpu_data_i = rom_data_o;
+        if(vector_output == 1'b1) cpu_data_i = pic_data_o;
+        else if(rom_cs == 1'b1) cpu_data_i = rom_data_o;
         else if(ram_cs == 1'b1) cpu_data_i = ram_data_o;
         else if(uart_cs == 1'b1) cpu_data_i = uart_data_o;
         else if(led_cs == 1'b1) cpu_data_i = leds_data_o;
@@ -339,6 +345,7 @@ always @(*) begin
         else if(sd_cs == 1'b1) cpu_data_i = sd_data_o;
         else if(video_cs == 1'b1) cpu_data_i = video_data_o;
         else if(mmu_cs == 1'b1) cpu_data_i = mmu_data_o;
+        else if(pic_cs == 1'b1) cpu_data_i = pic_data_o;
         else if(addr_dec_cs == 1'b1) cpu_data_i = addr_dec_data_o;
         else cpu_data_i = cpu_data_o;
 end
