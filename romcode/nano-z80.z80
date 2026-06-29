@@ -10,6 +10,9 @@
         ; Configure stack pointer
         ld sp, RAM_END
 init:
+        ; Setup interrupts
+        call init_im2
+
         ; Print string with pointer
         ld hl, msg_boot
         call print_string
@@ -288,6 +291,48 @@ memory_dump_pos_5
         ret
 
 
+dummy_isr:
+        ei
+        reti
+
+timer_isr:
+        ; Fast save of registers
+        ; May have to use stack in CP/M
+        ex af, af'
+        exx
+        
+        ld hl, (timer_ticks)
+        inc hl
+        ld (timer_ticks), hl
+        
+        ; Restore registers
+        exx
+        ex af, af'
+        ei
+        reti
+
+init_im2:
+        di
+        ld hl, VECT_BASE
+        ld b, 128
+init_im2_loop:
+        ld (hl), <(dummy_isr)
+        inc hl
+        ld (hl), >(dummy_isr)
+        inc hl
+        djnz init_im2_loop
+
+        ld hl, VECT_BASE
+        ld (hl), <(timer_isr)
+        inc hl
+        ld (hl), >(timer_isr)
+
+        ld a, VECT_HIGH
+        ld i, a
+        im 2
+        ei
+        ret
+
         include "uart.z80"
         include "tty.z80"
         include "keyb.z80"
@@ -315,3 +360,5 @@ msg_error:
         db "Error",13,10,0
 msg_invalid_port:
         db "Invalid port number",13,10,0
+timer_ticks:
+        dw 0x0000
