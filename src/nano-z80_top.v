@@ -106,10 +106,12 @@ Gowin_rPLL sdram_pll(
 );
 
 wire wait_n;
+wire m1_n;
+wire int_n;
 
 tv80s CPU(
     // Outputs
-    .m1_n(), 
+    .m1_n(m1_n), 
     .mreq_n(mreq_n), 
     .iorq_n(ioreq_n), 
     .rd_n(rd_n), 
@@ -128,6 +130,20 @@ tv80s CPU(
     .busrq_n(1'b1), 
     .di(cpu_data_i), 
     .cen(1'b1)
+);
+
+pic pic_inst(
+    .clk_i(clk_i),
+    .rst_n_i(rst_n),
+    .wr_n(wr_n),
+    .reg_addr_i(cpu_addr[7:0]),
+    .data_i(cpu_data_o),
+    .pic_cs(pic_cs),
+    .int_n_i(8'b11111111),
+    .ioreq_n(ioreq_n),
+    .m1_n(m1_n),
+    .data_o(pic_data_o),
+    .int_n_o(int_n)
 );
 
 bootrom bootrom_inst(

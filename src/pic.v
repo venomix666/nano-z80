@@ -32,7 +32,6 @@ module pic(
     input               wr_n,
 	input   [7:0]       reg_addr_i,
     input   [7:0]       data_i,
-    input  [15:0]       addr_i,
     input               pic_cs,
     input   [7:0]       int_n_i,
     input               ioreq_n,
