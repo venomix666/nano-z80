@@ -64,6 +64,7 @@ wire    [7:0]   sd_data_o;
 wire    [7:0]   video_data_o;
 wire    [7:0]   mmu_data_o;
 wire    [7:0]   pic_data_o;
+wire    [7:0]   timer_data_o;
 wire    [7:0]   addr_dec_data_o;
 
 reg     [7:0]   cpu_data_i;
@@ -84,6 +85,7 @@ wire            sd_cs;
 wire            video_cs;
 wire            mmu_cs;
 wire            pic_cs;
+wire            timer_cs;
 wire            addr_dec_cs;
 
 wire    [7:0]   ledwire;
@@ -114,7 +116,8 @@ wire wait_n;
 wire m1_n;
 wire int_n;
 wire vector_output;
-wire irq_ack
+wire [7:0] irq_ack;
+wire timer_irq_n;
 
 tv80s CPU(
     // Outputs
@@ -146,7 +149,7 @@ pic pic_inst(
     .reg_addr_i(cpu_addr[7:0]),
     .data_i(cpu_data_o),
     .pic_cs(pic_cs),
-    .int_n_i(8'b11111111),
+    .int_n_i({7'b1111111, timer_irq_n}),
     .ioreq_n(ioreq_n),
     .m1_n(m1_n),
     .data_o(pic_data_o),
@@ -154,6 +157,19 @@ pic pic_inst(
     .vector_output(vector_output),
     .irq_ack_o(irq_ack)
 );
+
+timer timer_inst(
+    .clk_i(clk_i),
+    .rst_n_i(rst_n),
+    .wr_n(wr_n),
+    .reg_addr_i(cpu_addr[2:0]),
+    .data_i(cpu_data_o),
+    .timer_cs(timer_cs),
+    .irq_ack(irq_ack[0]),
+    .data_o(timer_data_o),
+    .timer_irq_n_o(timer_irq_n)
+);
+
 
 bootrom bootrom_inst(
     .clk(clk_i),
@@ -268,6 +284,7 @@ addr_decoder addr_dec(
     .video_cs(video_cs),
     .mmu_cs(mmu_cs),
     .pic_cs(pic_cs),
+    .timer_cs(timer_cs),
     .addr_dec_cs(addr_dec_cs)
 );
 
@@ -351,6 +368,7 @@ always @(*) begin
         else if(video_cs == 1'b1) cpu_data_i = video_data_o;
         else if(mmu_cs == 1'b1) cpu_data_i = mmu_data_o;
         else if(pic_cs == 1'b1) cpu_data_i = pic_data_o;
+        else if(timer_cs == 1'b1) cpu_data_i = timer_data_o;
         else if(addr_dec_cs == 1'b1) cpu_data_i = addr_dec_data_o;
         else cpu_data_i = cpu_data_o;
 end

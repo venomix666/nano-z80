@@ -32,6 +32,7 @@
         <File path="src/sdcard/sd_rw.v" type="file.verilog" enable="1"/>
         <File path="src/sdcard/sdcmd_ctrl.v" type="file.verilog" enable="1"/>
         <File path="src/sdram_z80.v" type="file.verilog" enable="1"/>
+        <File path="src/timer.v" type="file.verilog" enable="1"/>
         <File path="src/usb_hid_host/usb_hid_host.v" type="file.verilog" enable="1"/>
         <File path="src/usb_hid_host/usb_hid_host_rom.v" type="file.verilog" enable="1"/>
         <File path="src/usb_hid_host/usb_interface.v" type="file.verilog" enable="1"/>

@@ -139,6 +139,7 @@ begin
             8'h15: interrupt_vector[5] <= data_i;
             8'h16: interrupt_vector[6] <= data_i;
             8'h17: interrupt_vector[7] <= data_i;
+            default: ;
         endcase
     end
 end
