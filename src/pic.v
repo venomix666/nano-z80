@@ -38,7 +38,8 @@ module pic(
     input               m1_n,
     output [7:0]        data_o,
     output reg          int_n_o,
-    output              vector_output
+    output              vector_output,
+    output [7:0]        irq_ack_o
 );
 
 reg [7:0] interrupt_enable;
@@ -60,7 +61,11 @@ reg [7:0] int_select;
 // Set interrupt flag to the CPU if any enabled input device requests an interrupt
 assign int_n_o = irq_pending ? 1'b0 : 1'b1;
 
+// Generate vector output active signal
 assign vector_output = int_ack && int_active;
+
+// Generate irq acknowledge signals
+assign irq_ack_o = (int_ack && int_active) ? int_select : 8'h00;
 
 always @(*)
 begin

@@ -4,12 +4,13 @@
 // the Tang Nano 20K board.
 //
 // Features:
-// Text mode video output, 80 columns, over HDMI
+// Text mode video output, 80 columns, or graphics (160x120x8 or 320x200x8) over HDMI
 // 8192k of SDRAM ram, divided into four pageable regions
 // ROM which can be switched out
 // SDCARD file access
 // UART
 // USB keyboard support
+// Programmable interrupt controller
 //
 // Copyright (C) 2026 Henrik Löfgren
 
@@ -108,9 +109,12 @@ Gowin_rPLL sdram_pll(
 );
 
 wire wait_n;
+
+// Interrupt controller signals
 wire m1_n;
 wire int_n;
 wire vector_output;
+wire irq_ack
 
 tv80s CPU(
     // Outputs
@@ -147,7 +151,8 @@ pic pic_inst(
     .m1_n(m1_n),
     .data_o(pic_data_o),
     .int_n_o(int_n),
-    .vector_output(vector_output)
+    .vector_output(vector_output),
+    .irq_ack_o(irq_ack)
 );
 
 bootrom bootrom_inst(
