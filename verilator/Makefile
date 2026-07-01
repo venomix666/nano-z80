@@ -22,13 +22,15 @@ endif
 
 N=top
 D=../src
-SRCS= $D/nano-z80_top.v $D/addr_decoder.v $D/leds.v $D/gpio.v \
+SRCS= $D/nano-z80_sim_top.v $D/addr_decoder.v $D/leds.v $D/gpio.v \
 	  $D/usb_hid_host/usb_hid_host_rom.v $D/usb_hid_host/usb_hid_host.v \
 	  $D/usb_hid_host/usb_interface.v \
 	$D/TV80-verilog/tv80_alu.v $D/TV80-verilog/tv80_core.v \
 	$D/TV80-verilog/tv80_mcode.v $D/TV80-verilog/tv80_reg.v \
 	$D/TV80-verilog/tv80s.v \
 	$D/UART/uart_rx.v $D/UART/uart_tx.v $D/UART/uart.v \
+	$D/UART/uart_rx_flex.v $D/UART/uart_tx_flex.v \
+	$D/mmu.v $D/pic.v $D/timer.v \
 	$D/bootrom.v $D/instram.v $D/top.v
 
 
@@ -52,7 +54,7 @@ VERILATOR_FLAGS += -cc --exe
 VERILATOR_FLAGS += -x-assign fast
 # Warn abount lint issues; may not want this on less solid designs
 #VERILATOR_FLAGS += -Wall
-VERILATOR_FLAGS += -Wno-CASEOVERLAP -Wno-COMBDLY -Wno-WIDTH -Wno-CASEINCOMPLETE -Wno-PINMISSING -Wno-CASEX
+VERILATOR_FLAGS += -Wno-CASEOVERLAP -Wno-COMBDLY -Wno-WIDTH -Wno-CASEINCOMPLETE -Wno-PINMISSING -Wno-CASEX -Wno-REALCVT --timescale-override 1ns
 
 # Make waveforms
 VERILATOR_FLAGS += --trace
