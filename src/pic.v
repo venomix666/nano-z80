@@ -37,7 +37,7 @@ module pic(
     input               ioreq_n,
     input               m1_n,
     output [7:0]        data_o,
-    output reg          int_n_o,
+    output              int_n_o,
     output              vector_output,
     output [7:0]        irq_ack_o
 );
@@ -73,13 +73,13 @@ always @(*) begin
 end
 
 // Set interrupt flag to the CPU if any enabled input device requests an interrupt
-assign int_n_o = irq_pending ? 1'b0 : 1'b1;
+assign int_n_o = ~irq_pending; 
 
 // Generate vector output active signal
-assign vector_output = int_ack && int_active;
+assign vector_output = int_ack && ack_active;
 
 // Generate irq acknowledge signal
-assign irq_ack_o = (int_ack && int_active) ? int_select : 8'h00;
+assign irq_ack_o = (int_ack && ack_active) ? int_select : 8'h00;
 
 always @(*)
 begin
@@ -95,6 +95,7 @@ begin
                 else if (int_select[5]) data_o_reg = interrupt_vector[5];
                 else if (int_select[6]) data_o_reg = interrupt_vector[6];
                 else if (int_select[7]) data_o_reg = interrupt_vector[7];
+                else data_o_reg = 8'd0;
         end
         else begin
             case(reg_addr_i)
@@ -108,6 +109,12 @@ begin
                 8'h15: data_o_reg = interrupt_vector[5];
                 8'h16: data_o_reg = interrupt_vector[6];
                 8'h17: data_o_reg = interrupt_vector[7];
+                8'h20: data_o_reg = irq_pending_mask;
+                8'h21: data_o_reg = prio_irq;
+                8'h22: data_o_reg = {7'd0, irq_ack_o};
+                8'h23: data_o_reg = int_select;
+                8'h24: data_o_reg = {7'd0, int_ack_latched};
+                8'h25: data_o_reg = {7'd0, irq_pending};
                 default: data_o_reg = 8'd0;
             endcase
         end
@@ -144,24 +151,28 @@ begin
     end
 end
 
+reg ack_active;
+reg int_ack_latched;
 always @(posedge clk_i or negedge rst_n_i)
 begin
     if(rst_n_i == 1'b0)
     begin
         int_active <= 1'b0;
+        ack_active <= 1'b0;
         int_select <= 8'h00;
         interrupt_flags <= 8'h00;
+        int_ack_latched <= 1'b0;
     end
     else
     begin
         interrupt_flags <= ~int_n_i;
-        if(irq_pending) begin
-            int_active <= 1'b1;
-            if(!int_active) int_select <= prio_irq;
-        end
-        else if(!int_ack) begin
-            int_active <= 1'b0;
-            int_select <= 8'h00;
+        if(int_ack) int_ack_latched <= 1'b1;
+        if(int_ack && !ack_active && irq_pending) begin
+            ack_active <= 1'b1;
+            int_select <= prio_irq;
+        end else if(!int_ack) begin
+            ack_active <= 1'b0;
+            int_select <= 8'd0;
         end
     end
 end

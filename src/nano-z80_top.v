@@ -135,7 +135,7 @@ tv80s CPU(
     .reset_n(rst_n), 
     .clk(clk_i), 
     .wait_n(wait_n), 
-    .int_n(1'b1), 
+    .int_n(int_n), 
     .nmi_n(1'b1), 
     .busrq_n(1'b1), 
     .di(cpu_data_i), 

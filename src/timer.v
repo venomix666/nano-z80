@@ -46,6 +46,7 @@ begin
             3'b010: data_o_reg = timer_set_ms[15:8];
             3'b011: data_o_reg = timer_ms[7:0];
             3'b100: data_o_reg = timer_ms[15:8];
+            3'b101: data_o_reg = {7'd0, irq_n};
             default: data_o_reg = 8'd0;
         endcase
 end
