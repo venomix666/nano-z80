@@ -109,12 +109,6 @@ begin
                 8'h15: data_o_reg = interrupt_vector[5];
                 8'h16: data_o_reg = interrupt_vector[6];
                 8'h17: data_o_reg = interrupt_vector[7];
-                8'h20: data_o_reg = irq_pending_mask;
-                8'h21: data_o_reg = prio_irq;
-                8'h22: data_o_reg = {7'd0, irq_ack_o};
-                8'h23: data_o_reg = int_select;
-                8'h24: data_o_reg = {7'd0, int_ack_latched};
-                8'h25: data_o_reg = {7'd0, irq_pending};
                 default: data_o_reg = 8'd0;
             endcase
         end
