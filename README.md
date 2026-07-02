@@ -13,6 +13,8 @@ Current features:
 * Bidirectional GPIO on the header on the nanoComp carrier board
 * Control of the LEDs on the Tang Nano 20k board
 * Additional UART on carrier board UART header
+* Programmable interrupt controller with 8 irq channels
+* Programmable timer for generating timer interrupts
 
 Everything is clocked of the pixel clock, so the Z80-core is running at 25.175 MHz.
 
@@ -154,7 +156,26 @@ In addition to the banked port, the following ports are always available:
 0x05:  TX ready UART B - UART is ready to accept a new TX byte  
 0x06:  RX data UART B  
 0x07:  RX data available UART B - high if a new byte is available in RX data  
-0x08:  Baudrate UART B - 0: 4800, 1: 9600, 2: 19200, 3: 38400, 4: 57600, 5: 115200  
+0x08:  Baudrate UART B - 0: 4800, 1: 9600, 2: 19200, 3: 38400, 4: 57600, 5: 115200
+
+### Interrupt controller ports (0x7f == 0x06)
+0x00:  Interrupt enable bitmask, active high  
+0x01:  Interrupt flags, active high  
+0x10:  IRQ0 IM 2 vector  
+0x11:  IRQ1 IM 2 vector   
+0x12:  IRQ2 IM 2 vector     
+0x13:  IRQ3 IM 2 vector   
+0x14:  IRQ4 IM 2 vector     
+0x15:  IRQ5 IM 2 vector   
+0x16:  IRQ6 IM 2 vector     
+0x17:  IRQ7 IM 2 vector     
+
+### Timer ports (0x7f == 0x07)
+0x00:  Timer start (0 = stopped, 1 = running)  
+0x01:  Timer compare value in ms, LSB  
+0x02:  Timer compare value is ms, MSB  
+0x03:  Timer current value in ms, LSB (read only)  
+0x04:  Timer current value in ms, MSB (read only)  
 
 ### Known bugs
 * Direct writing / reading to the video memory in text mode
