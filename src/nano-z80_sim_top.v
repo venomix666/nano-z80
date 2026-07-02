@@ -34,18 +34,18 @@ module nanoz80_top
     inout           sdcmd,
     inout [3:0]     sddat,
     inout           usb_dp,
-    inout           usb_dm,
+    inout           usb_dm
     // Magic SDRAM pin names
-    output O_sdram_clk,                                                        
-    output O_sdram_cke,                                                        
-    output O_sdram_cs_n,            // chip select                             
-    output O_sdram_cas_n,           // columns address select                  
-    output O_sdram_ras_n,           // row address select                      
-    output O_sdram_wen_n,           // write enable                            
-    inout [31:0] IO_sdram_dq,       // 32 bit bidirectional data bus           
-    output [10:0] O_sdram_addr,     // 11 bit multiplexed address bus          
-    output [1:0] O_sdram_ba,        // two banks                               
-    output [3:0] O_sdram_dqm        // 32/4        
+    //output O_sdram_clk,                                                        
+    //output O_sdram_cke,                                                        
+    //output O_sdram_cs_n,            // chip select                             
+    //output O_sdram_cas_n,           // columns address select                  
+    //output O_sdram_ras_n,           // row address select                      
+    //output O_sdram_wen_n,           // write enable                            
+    //inout [31:0] IO_sdram_dq,       // 32 bit bidirectional data bus           
+    //output [10:0] O_sdram_addr,     // 11 bit multiplexed address bus          
+    //output [1:0] O_sdram_ba,        // two banks                               
+    //output [3:0] O_sdram_dqm        // 32/4        
 );
 
 wire            mreq_n;
@@ -104,11 +104,11 @@ wire clk50;
 wire clk50_p;
 
 // PLL to generate SDRAM clocks
-Gowin_rPLL sdram_pll(
-        .clkout(clk50), //output clkout
-        .clkoutp(clk50_p), //output clkoutp
-        .clkin(clk_i) //input clkin
-);
+//Gowin_rPLL sdram_pll(
+//        .clkout(clk50), //output clkout
+//        .clkoutp(clk50_p), //output clkoutp
+//        .clkin(clk_i) //input clkin
+//);
 
 wire wait_n;
 
@@ -134,7 +134,7 @@ tv80s CPU(
     // Inputs
     .reset_n(rst_n), 
     .clk(clk_i), 
-    .wait_n(wait_n), 
+    .wait_n(1'b1), 
     .int_n(int_n), 
     .nmi_n(1'b1), 
     .busrq_n(1'b1), 
@@ -176,7 +176,7 @@ bootrom bootrom_inst(
     .adr(cpu_addr[12:0]),
     .data(rom_data_o)
 );
- 
+ /*
 sdram_z80_interface sdram_z80_interface_inst(
     .clk_50(clk50),
     .reset_n(rst_n),
@@ -203,8 +203,18 @@ sdram_z80_interface sdram_z80_interface_inst(
 
     .current_bank_reg(high_addr)
 );
-         
-                                                                  
+   */      
+
+// Simulate with block ram for speed
+instram main_ram(
+    .clk(clk_i),
+    .adr(cpu_addr),
+    .rwn(wr_n),
+    .cs(ram_cs),
+    .data_i(cpu_data_o),
+    .data_o(ram_data_o)
+);
+
 mmu mmu_inst(                                                                  
     .clk_i(clk_i),                                                             
     .rst_n_i(rst_n),                                                           
@@ -290,7 +300,7 @@ usb_interface usb_interface_inst(
     .usb_dm(usb_dm)
 );
 
-sd_interface sd_interface_inst(
+/*sd_interface sd_interface_inst(
     .clk_i(clk_i),
     .rst_n_i(rst_n), 
     .wr_n(wr_n),
@@ -301,8 +311,8 @@ sd_interface sd_interface_inst(
     .sdclk(sdclk),
     .sdcmd(sdcmd),
     .sddat(sddat) 
-);
-
+);*/
+/*
 video video_inst(
     .clk_i(clk_i),
     .clk_vid_i(clk_i),
@@ -317,7 +327,7 @@ video video_inst(
     .tmds_clk_n_o(tmds_clk_n),
     .tmds_data_p_o(tmds_data_p),
     .tmds_data_n_o(tmds_data_n)
-);
+);*/
 
 
 // CPU data input mux

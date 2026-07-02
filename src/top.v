@@ -24,7 +24,7 @@ module top
     end
 
     always_ff @ (posedge clk_i) begin
-        if($time > 1000000) begin
+        if($time > 1000000000) begin
             $write("*-* All Finished *-*\n");
             $finish;
         end

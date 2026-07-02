@@ -27,6 +27,8 @@ module addr_decoder(
     output              sd_cs,
     output              video_cs,
     output              mmu_cs,
+    output              pic_cs,
+    output              timer_cs,
     output              addr_dec_cs
 );
 
@@ -42,6 +44,8 @@ reg         usb_cs_reg;
 reg         sd_cs_reg;
 reg         video_cs_reg;
 reg         mmu_cs_reg;
+reg         pic_cs_reg;
+reg         timer_cs_reg;
 reg         addr_dec_cs_reg;
 reg         rom_disable;
 
@@ -74,6 +78,8 @@ always @(*) begin
     sd_cs_reg <= 1'b0;
     video_cs_reg <= 1'b0;
     mmu_cs_reg <= 1'b0;
+    pic_cs_reg <= 1'b0;
+    timer_cs_reg <= 1'b0;
     addr_dec_cs_reg <= 1'b0;
 
     // Memory requests
@@ -90,6 +96,8 @@ always @(*) begin
             8'h03: sd_cs_reg <= 1'b1;
             8'h04: video_cs_reg <= 1'b1;
             8'h05: uart_cs_reg <= 1'b1;
+            8'h06: pic_cs_reg <= 1'b1;
+            8'h07: timer_cs_reg <= 1'b1;
             default: led_cs_reg <= 1'b0;
         endcase
     end
@@ -125,6 +133,8 @@ assign sd_cs = sd_cs_reg;
 assign rom_cs = rom_cs_reg;
 assign video_cs = video_cs_reg;
 assign mmu_cs = mmu_cs_reg;
+assign pic_cs = pic_cs_reg;
+assign timer_cs = timer_cs_reg;
 assign addr_dec_cs = addr_dec_cs_reg;
 
 endmodule

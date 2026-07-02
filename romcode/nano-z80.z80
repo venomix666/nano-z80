@@ -10,6 +10,9 @@
         ; Configure stack pointer
         ld sp, RAM_END
 init:
+        ; Setup interrupts
+        call init_im2
+
         ; Print string with pointer
         ld hl, msg_boot
         call print_string
@@ -86,8 +89,13 @@ input_backspace:
 ; Jumps to the supplied address
 
 monitor_boot:
+        di      ; Disable interrupts before booting to avoid conflicts
+        ld a, IO_SELECT_PIC
+        out (IO_BANK), a
+        ld a, $00
+        out (PIC_IRQ_ENABLE), a
+
         call sd_boot
-        ;ret
         ld a, (BOOT_PAGE)
         ld h, a
         ld l, 0
@@ -287,6 +295,68 @@ memory_dump_pos_5
         pop hl
         ret
 
+
+dummy_isr:
+        ei
+        reti
+
+; Dummy timer ISR which counts up a 16 bit variable in memory
+timer_isr:
+        ; Fast save of registers
+        ; May have to use stack in CP/M
+        ex af, af'
+        exx
+        
+        ld hl, (TIMER_TICKS)
+        inc hl
+        ld (TIMER_TICKS), hl
+        
+        ; Restore registers
+        exx
+        ex af, af'
+        ei
+        reti
+
+; Setup interrupts
+init_im2:
+        di
+        ld hl, VECT_BASE
+        ld b, 128
+init_im2_loop:
+        ld (hl), <(dummy_isr)
+        inc hl
+        ld (hl), >(dummy_isr)
+        inc hl
+        djnz init_im2_loop
+
+        ld hl, VECT_BASE
+        ld (hl), <(timer_isr)
+        inc hl
+        ld (hl), >(timer_isr)
+
+        ld hl, TIMER_TICKS
+        ld (hl), 0
+        inc hl
+        ld (hl), 0
+
+        ld a, IO_SELECT_PIC
+        out (IO_BANK), a
+        ld a, $01
+        out (PIC_IRQ_ENABLE), a
+        ld a, $00
+        out (PIC_IRQ0_VECTOR), a
+
+        ld a, VECT_HIGH
+        ld i, a
+        im 2
+        ei
+
+        ld a, IO_SELECT_TIMER
+        out (IO_BANK), a
+        ld a, $01
+        out (TIMER_ENABLE), a
+
+        ret
 
         include "uart.z80"
         include "tty.z80"

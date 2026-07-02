@@ -5,7 +5,10 @@ RAM_END         equ $FFFF       ; Top of RAM
 INPUT_BUF       equ $FF00       ; Monitor input buffer
 PAGE_CNT        equ $FFFE       ; SD card page counter
 BOOT_PAGE       equ $FFFF       ; RAM page to boot from
+TIMER_TICKS     equ $FFE0
 SD_ADDR_BUF     equ $FFF0
+VECT_BASE       equ $FE00       ; Interrupt vector base
+VECT_HIGH       equ $FE         ; Pointer for I register
 
 ; UART IO ports
 UART_TX_DATA    equ $70         ; UART transmit data
@@ -22,6 +25,9 @@ IO_SELECT_GPIO  equ $01         ; IO bank value for GPIO
 IO_SELECT_USB   equ $02         ; IO bank value for USB HID
 IO_SELECT_SD    equ $03         ; IO bank balue for SD Card
 IO_SELECT_TTY   equ $04         ; IO bank value for video/tty
+IO_SELECT_UART  equ $05         ; IO bank value for UART
+IO_SELECT_PIC   equ $06         ; IO bank value for interrupt controller
+IO_SELECT_TIMER equ $07         ; IO bank value for timer
 
 ; LEDs IO ports
 LEDS_REG        equ $00         ; LED registers, bits 0-6 control one LED each
@@ -85,3 +91,22 @@ TTY_BG_BLUE             equ $15         ; Background blue
 TTY_LINE_DATA           equ $80         ; Data on current line ($80-$CF)
 TTY_WRITE_AVAIL         equ $76         ; Always available TTY write
 TTY_BUSY_AVAIL          equ $77         ; Always avaialble TTY busy 
+
+; Interrupt controller interface IO ports
+PIC_IRQ_ENABLE          equ $00         ; IRQ enable, bitwise, active high
+PIC_IRQ_FLAGS           equ $01         ; IRQ flags, active high, read only
+PIC_IRQ0_VECTOR         equ $10         ; IRQ 0 vector
+PIC_IRQ1_VECTOR         equ $11         ; IRQ 0 vector
+PIC_IRQ2_VECTOR         equ $12         ; IRQ 0 vector
+PIC_IRQ3_VECTOR         equ $13         ; IRQ 0 vector
+PIC_IRQ4_VECTOR         equ $14         ; IRQ 0 vector
+PIC_IRQ5_VECTOR         equ $15         ; IRQ 0 vector
+PIC_IRQ6_VECTOR         equ $16         ; IRQ 0 vector
+PIC_IRQ7_VECTOR         equ $17         ; IRQ 0 vector
+
+; Timer interface IO ports
+TIMER_ENABLE            equ $00         ; Timer enable, active high
+TIMER_COMP_LSB          equ $01         ; Timer compare value, ms
+TIMER_COMP_MSB          equ $02         ; Timer compare value, ms
+TIMER_LSB               equ $03         ; Timer actual value, ms
+TIMER_MSB               equ $04         ; Timer actual value, ms
