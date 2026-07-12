@@ -706,7 +706,23 @@ end
 
 // Scrolling
 reg [4:0] start_y;
+reg scroll_up_prev;
+reg scroll_down_prev;
 localparam LINES = 30;
+
+// Oneshot for scroll up/down
+always @(posedge clk_i or negedge rst_n_i)
+begin
+    if(rst_n_i == 1'b0)
+    begin 
+        scroll_up_prev <= 1'd0;
+        scroll_down_prev <= 1'd0;
+    end
+    else begin  
+        scroll_up_prev <= scroll_up;
+        scroll_down_prev <= scroll_down;
+    end
+end
 
 always @(posedge clk_i or negedge rst_n_i)
 begin
@@ -714,9 +730,9 @@ begin
     begin 
         start_y <= 5'd0;
     end
-    else if(scroll_up || tty_scroll)
+    else if((scroll_up && !scroll_up_prev) || tty_scroll)
         start_y <= (start_y + 1) % LINES;
-    else if(scroll_down)
+    else if(scroll_down && !scroll_down_prev)
     begin
         if(start_y == 0) start_y <= LINES - 1;
         else start_y <= start_y - 1;
