@@ -162,7 +162,7 @@ timer timer_inst(
     .clk_i(clk_i),
     .rst_n_i(rst_n),
     .wr_n(wr_n),
-    .reg_addr_i(cpu_addr[2:0]),
+    .reg_addr_i(cpu_addr),
     .data_i(cpu_data_o),
     .timer_cs(timer_cs),
     .irq_ack(irq_ack[0]),

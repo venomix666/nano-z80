@@ -109,7 +109,9 @@ always @(*) begin
         usb_cs_reg <= 1'b1; // Always access keyboard input registers
     else if(ioreq_n == 1'b0 && addr_i[7:0] > 8'h75 && addr_i[7:0] < 8'h78)
         video_cs_reg <= 1'b1; // Always access tty registers
-    else if(ioreq_n == 1'b0 && addr_i[7:0] > 8'h75 && addr_i[7:0] < 8'h80)
+    else if(ioreq_n == 1'b0 && addr_i[7:0] > 8'h77 && addr_i[7:0] < 8'h79)
+        timer_cs_reg <= 1'b1;
+    else if(ioreq_n == 1'b0 && addr_i[7:0] > 8'h78 && addr_i[7:0] < 8'h80)
         addr_dec_cs_reg <= 1'b1;
 
     // Reading of internal registers

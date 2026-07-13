@@ -10,12 +10,13 @@
 // 02       Timer compare value in milliseconds MSB
 // 03       Timer current milliseconds LSB (read only)
 // 04       Timer current milliseonds MSB (read only)
+// 05 / 78  Timer seconds counter (resets at 60)
 
 module timer(
 	input               clk_i,
 	input               rst_n_i,
     input               wr_n,
-	input   [2:0]       reg_addr_i,
+	input   [7:0]       reg_addr_i,
     input   [7:0]       data_i,
     input               timer_cs,
     input               irq_ack,
@@ -33,6 +34,10 @@ reg [15:0]  timer_ms;
 
 reg [15:0]  timer_set_ms;
 
+reg [6:0]   timer_s;
+
+reg [9:0]   timer_s_ms;
+
 reg timer_run;
 
 reg irq_n;
@@ -41,11 +46,13 @@ reg irq_n;
 always @(*)
 begin
         case(reg_addr_i)
-            3'b000: data_o_reg = {7'd0, timer_run};
-            3'b001: data_o_reg = timer_set_ms[7:0];
-            3'b010: data_o_reg = timer_set_ms[15:8];
-            3'b011: data_o_reg = timer_ms[7:0];
-            3'b100: data_o_reg = timer_ms[15:8];
+            8'h00: data_o_reg = {7'd0, timer_run};
+            8'h01: data_o_reg = timer_set_ms[7:0];
+            8'h02: data_o_reg = timer_set_ms[15:8];
+            8'h03: data_o_reg = timer_ms[7:0];
+            8'h04: data_o_reg = timer_ms[15:8];
+            8'h05: data_o_reg = {2'd0, timer_s};
+            8'h78: data_o_reg = {2'd0, timer_s};
             default: data_o_reg = 8'd0;
         endcase
 end
@@ -78,6 +85,8 @@ begin
     begin
         timer_sub <= 15'd0;
         timer_ms <= 16'd0;
+        timer_s <= 6'd0;
+        timer_s_ms <= 10'd0;
         irq_n <= 1'b1;
     end
     else
@@ -88,6 +97,7 @@ begin
             if(timer_sub == TIMER_MS_DELAY) begin
                     timer_sub <= 15'd0;
                     timer_ms <= timer_ms + 1;
+                    timer_s_ms <= timer_s_ms + 1;
             end
             else
                 timer_sub <= timer_sub + 1;
@@ -96,13 +106,20 @@ begin
                 timer_ms <= 16'd0;
                 if(!irq_ack) irq_n <= 1'b0;
             end
-            
+
+            if(timer_s_ms == 1000) begin
+                if(timer_s < 59) timer_s <= timer_s + 1;
+                else timer_s <= 6'd0;
+                timer_s_ms <= 10'd0;
+            end
            
         end
         else begin
             // Reset timer if stopped
             timer_sub <= 15'd0;
             timer_ms <= 15'd0;
+            timer_s <= 6'd0;
+            timer_s_ms <= 10'd0;
             irq_n <= 1'b1;
         end
     end
