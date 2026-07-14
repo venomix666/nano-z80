@@ -14,7 +14,7 @@
 // 08       -   New USB report 
 // 09       -   Device type - 0: no device, 1: keyboard, 2: mouse, 3: gamepad
 // 0a       -   Error signal
-// 0b       -   Arrow key configuration (0: ADM3A, 1: WordStar, 2: EMACS/MINCE) 
+// 0b       -   Arrow key configuration (0: ADM3A, 1: WordStar, 2: EMACS/MINCE, 3: VT52 for fuzix) 
 
 module usb_interface(
 	input               clk_i,
@@ -122,11 +122,13 @@ begin
         arrow_key_constants[10] = 8'd14;
         arrow_key_constants[11] = 8'd16;
 
-        // ADM-3A duplicate to avoid undefined values
-        arrow_key_constants[12] = 8'd12;
-        arrow_key_constants[13] = 8'd8;
-        arrow_key_constants[14] = 8'd10;
-        arrow_key_constants[15] = 8'd11;
+        // VT52 for Fuzix
+        arrow_key_constants[12] = 8'hC3; //C with high bit set
+        arrow_key_constants[13] = 8'hC4; //D with high bit set
+        arrow_key_constants[14] = 8'hC2; //B with high bit set
+        arrow_key_constants[15] = 8'hC1; //A with high bit set
+
+        
 
     end
     else if((!wr_n) && (usb_cs) && (reg_addr_i==8'h0b))
@@ -193,7 +195,7 @@ begin
         endcase
     end
     else begin
-        /* Handle auto-repat */
+        /* Handle auto-repeat */
         if(key_active[0] != 8'd0) begin
             key1_rpt_cnt <= key1_rpt_cnt - 1;
             if(key1_rpt_cnt == 23'd0) begin
@@ -306,6 +308,9 @@ function [7:0] scancode2char(input [7:0] scancode, input [7:0] modifiers, input 
             a = scancode - 4 + 65;
         else if ((modifiers & CTRL_MASK) && (modifiers & ~CTRL_MASK)==0)
             a = scancode - 3;
+    end else if(scancode >=58 && scancode <= 69) begin // Function keys
+        // Map function keys F1 - F12 to 0xf0 - 0xfc
+        a = scancode + 182;
     end else if (modifiers == 0) begin
         case (scancode)
             30: a = "1";
