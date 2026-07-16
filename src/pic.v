@@ -5,7 +5,7 @@
 //
 // Registers:
 // 00 Interrupt enable, bitwise, active high
-// 01 Interrupt flags, bitwise, read only
+// 01 Interrupt flags, bitwise, read only  (79 always available)
 // 10 Interrupt 0 vector
 // 11 Interrupt 1 vector
 // 12 Interrupt 2 vector
@@ -18,9 +18,9 @@
 //
 // Current assigment of interrupts:
 // 0: Timer
-// 1: Unused
-// 2: Unused
-// 3: Unused
+// 1: Keyboard
+// 2: UART A RX
+// 3: UART B RX
 // 4: Unused
 // 5: Unused
 // 6: Unused
@@ -109,6 +109,7 @@ begin
                 8'h15: data_o_reg = interrupt_vector[5];
                 8'h16: data_o_reg = interrupt_vector[6];
                 8'h17: data_o_reg = interrupt_vector[7];
+                8'h79: data_o_reg = interrupt_flags;
                 default: data_o_reg = 8'd0;
             endcase
         end
@@ -159,7 +160,7 @@ begin
     end
     else
     begin
-        interrupt_flags <= ~int_n_i;
+        interrupt_flags <= prio_irq;
         if(int_ack) int_ack_latched <= 1'b1;
         if(int_ack && !ack_active && irq_pending) begin
             ack_active <= 1'b1;

@@ -25,6 +25,7 @@ module usb_interface(
     input   [7:0]       data_i,
     input               usb_cs,
     output  [7:0]       data_o,
+    output              kb_int_n_o,
     inout               usb_dm,          // USB D+   
     inout               usb_dp           // USB D-
     
@@ -68,6 +69,9 @@ reg             [7:0]   arrow_key_constants [15:0];
 
 localparam      FIRST_REPEAT = 23'd8000000;
 localparam      REPEAT_RATE = 23'd1200000;
+
+// Interrupt when new key available
+assign kb_int_n_o = ~new_key;
 
 // Asynchronous read
 always @(*)

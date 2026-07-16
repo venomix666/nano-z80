@@ -57,7 +57,6 @@ int main(int argc, char** argv) {
     // Set Vtop's input signals
     top->rst_i = !1;
     top->clk_i = 0;
-    top->uart_rx_i = 1;
     uint8_t done=0;
     // Simulate until $finish
     while (!contextp->gotFinish()) {

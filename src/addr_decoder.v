@@ -17,6 +17,7 @@ module addr_decoder(
     input   [7:0]       data_i,
     input               mreq_n,
     input               ioreq_n,
+    input               m1_n,
     output  [7:0]       data_o,
     output              ram_cs,
     output              uart_cs,
@@ -87,7 +88,7 @@ always @(*) begin
     else if(mreq_n == 1'b0) ram_cs_reg <= 1'b1;
 
     // IO requests
-    if(ioreq_n == 1'b0 && (addr_i[7:0] < 8'h60 || addr_i[7:0] > 8'h7f))
+    if(ioreq_n == 1'b0 && m1_n == 1'b1 && (addr_i[7:0] < 8'h60 || addr_i[7:0] > 8'h7f))
     begin
         case(io_bank)
             8'h00: led_cs_reg <= 1'b1;
@@ -101,21 +102,23 @@ always @(*) begin
             default: led_cs_reg <= 1'b0;
         endcase
     end
-    else if(ioreq_n == 1'b0 && addr_i[7:0] > 8'h5f && addr_i[7:0] < 8'h68)     
+    else if(ioreq_n == 1'b0 && m1_n == 1'b1 && addr_i[7:0] > 8'h5f && addr_i[7:0] < 8'h68)     
         mmu_cs_reg <= 1'b1;  
-    else if(ioreq_n == 1'b0 && addr_i[7:0] > 8'h6f && addr_i[7:0] < 8'h74)
+    else if(ioreq_n == 1'b0 && m1_n == 1'b1 && addr_i[7:0] > 8'h6f && addr_i[7:0] < 8'h74)
         uart_cs_reg <= 1'b1; // Always access UART registers
-    else if(ioreq_n == 1'b0 && addr_i[7:0] > 8'h73 && addr_i[7:0] < 8'h76)
+    else if(ioreq_n == 1'b0 && m1_n == 1'b1 && addr_i[7:0] > 8'h73 && addr_i[7:0] < 8'h76)
         usb_cs_reg <= 1'b1; // Always access keyboard input registers
-    else if(ioreq_n == 1'b0 && addr_i[7:0] > 8'h75 && addr_i[7:0] < 8'h78)
+    else if(ioreq_n == 1'b0 && m1_n == 1'b1 && addr_i[7:0] > 8'h75 && addr_i[7:0] < 8'h78)
         video_cs_reg <= 1'b1; // Always access tty registers
-    else if(ioreq_n == 1'b0 && addr_i[7:0] > 8'h77 && addr_i[7:0] < 8'h79)
-        timer_cs_reg <= 1'b1;
-    else if(ioreq_n == 1'b0 && addr_i[7:0] > 8'h78 && addr_i[7:0] < 8'h80)
+    else if(ioreq_n == 1'b0 && m1_n == 1'b1 && addr_i[7:0] > 8'h77 && addr_i[7:0] < 8'h79)
+        timer_cs_reg <= 1'b1; // Always access timer registers
+    else if(ioreq_n == 1'b0 && m1_n == 1'b1 && addr_i[7:0] > 8'h78 && addr_i[7:0] < 8'h7a)
+        pic_cs_reg <= 1'b1; // Always access pic registers
+    else if(ioreq_n == 1'b0 && m1_n == 1'b1 && addr_i[7:0] > 8'h79 && addr_i[7:0] < 8'h80)
         addr_dec_cs_reg <= 1'b1;
 
     // Reading of internal registers
-    if(ioreq_n == 1'b0)
+    if(ioreq_n == 1'b0 && m1_n == 1'b1)
     begin
         case(addr_i[7:0])
             8'h7e: data_o_reg <= {7'd0, rom_disable};

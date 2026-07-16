@@ -118,6 +118,9 @@ wire int_n;
 wire vector_output;
 wire [7:0] irq_ack;
 wire timer_irq_n;
+wire kb_irq_n;
+wire uart_a_rx_irq_n;
+wire uart_b_rx_irq_n;
 
 tv80s CPU(
     // Outputs
@@ -149,7 +152,7 @@ pic pic_inst(
     .reg_addr_i(cpu_addr[7:0]),
     .data_i(cpu_data_o),
     .pic_cs(pic_cs),
-    .int_n_i({7'b1111111, timer_irq_n}),
+    .int_n_i({4'b1111, uart_b_rx_irq_n, uart_a_rx_irq_n, kb_irq_n, timer_irq_n}),
     .ioreq_n(ioreq_n),
     .m1_n(m1_n),
     .data_o(pic_data_o),
@@ -225,8 +228,10 @@ uart uart_inst(
         .uart_b_rx(uart_b_rx_i),
         .uart_cs(uart_cs),
         .R_W_n(wr_n),
-        .reg_addr(cpu_addr[3:0]),
+        .reg_addr(cpu_addr),
         .data_o(uart_data_o),
+        .uart_a_rx_irq_n_o(uart_a_rx_irq_n),
+        .uart_b_rx_irq_n_o(uart_b_rx_irq_n),
         .uart_tx(uart_tx_o),
         .uart_b_tx(uart_b_tx_o)
 );
@@ -239,6 +244,7 @@ addr_decoder addr_dec(
     .data_i(cpu_data_o),
     .mreq_n(mreq_n),
     .ioreq_n(ioreq_n),
+    .m1_n(m1_n),
     .data_o(addr_dec_data_o),
     .ram_cs(ram_cs),
     .uart_cs(uart_cs),
@@ -286,6 +292,7 @@ usb_interface usb_interface_inst(
     .data_i(cpu_data_o),
     .usb_cs(usb_cs),
     .data_o(usb_data_o),
+    .kb_int_n_o(kb_irq_n),
     .usb_dp(usb_dp),
     .usb_dm(usb_dm)
 );

@@ -3,15 +3,16 @@
 module top
 (
     input clk_i,
-    input rst_i,
-    input uart_rx_i
+    input rst_i
 );
+
+    wire uart_loop;
 
     nanoz80_top dut(
         .clk_i(clk_i),
         .rst_i(rst_i),
-        .uart_rx_i(uart_rx_i),
-        .uart_tx_o()
+        .uart_tx_o(uart_loop),
+        .uart_b_rx_i(uart_loop)
     );
 
     initial begin

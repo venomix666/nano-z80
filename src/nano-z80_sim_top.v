@@ -341,7 +341,7 @@ always @(*) begin
         else if(gpio_cs == 1'b1) cpu_data_i = gpio_data_o;
         else if(usb_cs == 1'b1) cpu_data_i = usb_data_o;
         else if(sd_cs == 1'b1) cpu_data_i = sd_data_o;
-        else if(video_cs == 1'b1) cpu_data_i = video_data_o;
+        else if(video_cs == 1'b1) cpu_data_i = 8'd0;
         else if(mmu_cs == 1'b1) cpu_data_i = mmu_data_o;
         else if(pic_cs == 1'b1) cpu_data_i = pic_data_o;
         else if(timer_cs == 1'b1) cpu_data_i = timer_data_o;

@@ -6,8 +6,10 @@ module uart(
     input                        uart_cs,
     input                        uart_b_rx,
     input                        R_W_n,
-    input       [3:0]            reg_addr,
+    input       [7:0]            reg_addr,
     output      [7:0]            data_o,
+    output                       uart_a_rx_irq_n_o,
+    output                       uart_b_rx_irq_n_o,
 	output                       uart_tx,
     output                       uart_b_tx
 );
@@ -26,7 +28,7 @@ module uart(
 
 parameter                        CLK_FRE  = 25.175;//Mhz
 parameter                        UART_FRE = 115200;
-parameter                        UART_B_FRE = 9600;
+parameter                        UART_B_FRE = 57600;
 
 reg[7:0]                         tx_data;
 
@@ -53,6 +55,9 @@ wire                             rx_b_data_ready;
 assign rx_data_ready = 1'b1;//always can receive data,
 assign rx_b_data_ready = 1'b1;
 
+assign uart_a_rx_irq_n_o = ~rx_data_avail;
+assign uart_b_rx_irq_n_o = ~rx_b_data_avail;
+
 // Registers for CPU interface
 
 reg                             rx_avail;
@@ -73,7 +78,10 @@ reg [7:0]                       rx_buffer_w;
 reg [7:0]                       rx_buffer_b [255:0];
 reg [7:0]                       rx_buffer_b_r;
 reg [7:0]                       rx_buffer_b_w;
+
 reg                             uart_cs_prev;
+reg                             uart_cs_prev2;
+reg [7:0]                       reg_addr_prev;
 
 always@(posedge clk or negedge rst_n)
 begin
@@ -91,7 +99,7 @@ begin
     end
     else if(uart_cs)
     begin
-        if(reg_addr==4'b0000 && !R_W_n)
+        if((reg_addr==8'h00 || reg_addr==8'h70) && !R_W_n)
         begin
                 tx_done <= 1'b0;
                 tx_data <= data_i;
@@ -111,7 +119,7 @@ begin
         tx_b_data <= 8'h00;
         tx_b_done <= 1'b1;
         tx_b_data_valid <= 1'b0;
-        uart_b_baud <= 3'd1; // 9600 default baudrate
+        uart_b_baud <= 3'd4; // 57600 default baudrate
     end
     // TX handling
     else if(tx_b_data_valid && tx_b_data_ready) 
@@ -121,13 +129,13 @@ begin
     end
     else if(uart_cs)
     begin
-        if(reg_addr==4'b0100 && !R_W_n)
+        if(reg_addr==8'b00000100 && !R_W_n)
         begin
                 tx_b_done <= 1'b0;
                 tx_b_data <= data_i;
                 tx_b_data_valid <= 1'b1;
         end
-        else if(reg_addr==4'b1000 && !R_W_n)
+        else if(reg_addr==8'b00001000 && !R_W_n)
         begin
             uart_b_baud <= data_i[2:0];
         end
@@ -142,22 +150,36 @@ end
 always@(*)
 begin
         case (reg_addr)
-            4'b0000: data_o_reg <= tx_data;
-            4'b0001: data_o_reg <= {7'd0, tx_data_ready};
-            4'b0010: data_o_reg <= rx_data_reg;
-            4'b0011: data_o_reg <= {7'd0, rx_data_avail}; 
-            4'b0100: data_o_reg <= tx_b_data;
-            4'b0101: data_o_reg <= {7'd0, tx_b_data_ready};
-            4'b0110: data_o_reg <= rx_b_data_reg;
-            4'b0111: data_o_reg <= {7'd0, rx_b_data_avail};
-            4'b1000: data_o_reg <= {5'd0, uart_b_baud};
+            8'b00000000: data_o_reg <= tx_data;
+            8'b00000001: data_o_reg <= {7'd0, tx_data_ready};
+            8'b00000010: data_o_reg <= rx_data_reg;
+            8'b00000011: data_o_reg <= {7'd0, rx_data_avail}; 
+            8'b00000100: data_o_reg <= tx_b_data;
+            8'b00000101: data_o_reg <= {7'd0, tx_b_data_ready};
+            8'b00000110: data_o_reg <= rx_b_data_reg;
+            8'b00000111: data_o_reg <= {7'd0, rx_b_data_avail};
+            8'b00001000: data_o_reg <= {5'd0, uart_b_baud};
+            8'b00001001: data_o_reg <= rx_buffer_b_r;
+            8'b00001010: data_o_reg <= rx_buffer_b_w;
+            8'b00001011: data_o_reg <= rx_buffer_r;
+            8'b00001100: data_o_reg <= rx_buffer_w;
+            8'h70: data_o_reg <= tx_data;
+            8'h71: data_o_reg <= {7'd0, tx_data_ready};
+            8'h72: data_o_reg <= rx_data_reg;
+            8'h73: data_o_reg <= {7'd0, rx_data_avail};
+
             default: data_o_reg <= 8'd0;
         endcase
 end
 
 always@(posedge clk)
 begin
-    uart_cs_prev <= uart_cs;
+    if(rst_n == 1'b0) begin
+        uart_cs_prev <= 1'b0;
+    end
+    else begin
+        uart_cs_prev <= uart_cs;
+    end
 end
 
 always@(posedge clk or negedge rst_n)
@@ -172,14 +194,11 @@ begin
     // Latch rx data and status
     else if(rx_data_valid)
     begin
-        //rx_data_reg <= rx_data;
-        //rx_data_avail <= 1'b1;
         rx_buffer[rx_buffer_w] <= rx_data;
         rx_buffer_w <= rx_buffer_w + 1;
     end
-    else if((reg_addr == 4'b0010) && (uart_cs) && (!uart_cs_prev) && (rx_data_avail))
+    else if((reg_addr == 8'b00000010 || reg_addr == 8'h72) && (uart_cs) && (!uart_cs_prev) && (rx_data_avail))
     begin
-        //rx_data_avail <= 1'b0;
         rx_data_reg <= rx_buffer[rx_buffer_r];
         rx_buffer_r <= rx_buffer_r + 1;
     end
@@ -194,22 +213,19 @@ begin
         rx_b_data_reg <= 8'd0;
         rx_buffer_b_r <= 8'd0;
         rx_buffer_b_w <= 8'd0;
-        //rx_b_data_avail <= 1'b0;
     end
     // Latch rx data and status
     else if(rx_b_data_valid)
     begin
-        //rx_b_data_reg <= rx_b_data;
-        //rx_b_data_avail <= 1'b1;
         rx_buffer_b[rx_buffer_b_w] <= rx_b_data;
         rx_buffer_b_w <= rx_buffer_b_w + 1;
     end
-    else if((reg_addr == 4'b0110) && (uart_cs) && (!uart_cs_prev) && (rx_b_data_avail))
+    else if((reg_addr == 8'b00000110) && (uart_cs) && (!uart_cs_prev) && (rx_b_data_avail))
     begin
-        //rx_b_data_avail <= 1'b0;
         rx_b_data_reg <= rx_buffer_b[rx_buffer_b_r];
         rx_buffer_b_r <= rx_buffer_b_r + 1;
     end
+
 end
 
 assign rx_b_data_avail = (rx_buffer_b_r != rx_buffer_b_w);
