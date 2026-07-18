@@ -20,7 +20,7 @@ Everything is clocked of the pixel clock, so the Z80-core is running at 25.175 M
 
 A port of David Given's [CP/Mish](https://github.com/davidgiven/cpmish) gives a very nice CP/M 2.2 environment for this computer. See the [cpmish page](https://github.com/davidgiven/cpmish/blob/master/arch/nano-z80/README.md) for more details.  
 
-The [FUZIX port](https://codeberg.org/venomix/FUZIX/src/branch/master/Kernel/platform/platform-nano-z80) provides four separate video terminals (TTY1-TTY4, switchable with F1-F4), access to both serial ports (TTY5 and TTY6), 4096 kB of addressable memory, and a FUZIX disk image on a separate location on the SD card so that it can be installed alongside CP/Mish.  
+The [FUZIX port](https://codeberg.org/EtchedPixels/FUZIX/src/branch/master/Kernel/platform/platform-nano-z80) provides four separate video terminals (TTY1-TTY4, switchable with F1-F4), access to both serial ports (TTY5 and TTY6), 4096 kB of addressable memory, and a FUZIX disk image on a separate location on the SD card so that it can be installed alongside CP/Mish.  
 
 Here are some screenshots:  
 <img width="320" alt="cpm_dir_a" src="https://github.com/user-attachments/assets/8d4843f6-e4ac-400a-a0cc-09472373edb0" />
