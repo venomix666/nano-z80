@@ -95,18 +95,18 @@ localparam      I_vs_pol        = 1'd0;
 
 integer vt52_r[0:15] =
 {
-    16'h00, 16'h00, 16'h00, 16'h00,
-    16'hAA, 16'hAA, 16'hAA, 16'hAA,
-    16'h55, 16'h55, 16'h55, 16'h55,
-    16'hFF, 16'hFF, 16'hFF, 16'hFF
+    16'h00, 16'h00, 16'hAA, 16'hAA,
+    16'h00, 16'h00, 16'hAA, 16'hAA,
+    16'h55, 16'h55, 16'hFF, 16'hFF,
+    16'h55, 16'h55, 16'hFF, 16'hFF
 };
    
 integer vt52_g[0:15] =
 {
-    16'h00, 16'h00, 16'hAA, 16'hAA,
-    16'h00, 16'h00, 16'h55, 16'hAA,
-    16'h55, 16'h55, 16'hFF, 16'hFF,
-    16'h55, 16'h55, 16'hFF, 16'hFF
+    16'h00, 16'h00, 16'h00, 16'h00,
+    16'hAA, 16'hAA, 16'hAA, 16'hAA,
+    16'h55, 16'h55, 16'h55, 16'h55,
+    16'hFF, 16'hFF, 16'hFF, 16'hFF
 };
 
 integer vt52_b[0:15] =
