@@ -30,6 +30,7 @@ Here are some screenshots:
 <img width="320" alt="fuzixboot" src="https://github.com/user-attachments/assets/753da2f6-6261-4288-9b78-8b9d40adc3a0" />
 <img width="320" alt="fuzixlogin" src="https://github.com/user-attachments/assets/e83c2ae3-28c7-4000-b2d5-0c71c38e8b06" />
 <img width="320" alt="320x200x8_test" src="https://github.com/user-attachments/assets/97b479ec-0d84-4185-9ff9-9f2ea5d99c9b" />
+<img width="320" alt="multicolor text" src="https://github.com/user-attachments/assets/92f5525d-ec5c-439c-8d8f-5987961831b3" />
 
 ## Gettings started
 
