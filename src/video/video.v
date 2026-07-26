@@ -267,8 +267,8 @@ reg     [7:0]   bg_g;
 reg     [7:0]   bg_b;
 
 // vt52 color extension handling
-reg [3:0]   ink;
-reg [3:0]   paper;
+reg [3:0]   ink     [3:0];
+reg [3:0]   paper   [3:0];
 
 reg     [2:0]   video_mode;
 
@@ -292,8 +292,8 @@ begin
     else if(reg_addr_i == 8'h13) data_o_reg <= bg_r;
     else if(reg_addr_i == 8'h14) data_o_reg <= bg_g;
     else if(reg_addr_i == 8'h15) data_o_reg <= bg_b;
-    else if(reg_addr_i == 8'h16) data_o_reg <= {4'd0, ink};
-    else if(reg_addr_i == 8'h17) data_o_reg <= {4'd0, paper};
+    else if(reg_addr_i == 8'h16) data_o_reg <= {4'd0, ink[active_buffer]};
+    else if(reg_addr_i == 8'h17) data_o_reg <= {4'd0, paper[active_buffer]};
     else if(reg_addr_i == 8'h20) data_o_reg <= {5'd0, video_mode};
     else if(reg_addr_i == 8'h21) data_o_reg <= wpixel_y;
     else if(reg_addr_i == 8'h22) data_o_reg <= wpixel_x[7:0];
@@ -352,8 +352,14 @@ begin
         bg_g <= 8'h00;
         bg_b <= 8'h00;
     
-        ink <= 4'd7;
-        paper <= 4'd0;
+        ink[0] <= 4'd7;
+        ink[1] <= 4'd7;
+        ink[2] <= 4'd7;
+        ink[3] <= 4'd7;
+        paper[0] <= 4'd0;
+        paper[1] <= 4'd0;
+        paper[2] <= 4'd0;
+        paper[3] <= 4'd0;
 
         video_mode <= 3'd0;
 
@@ -403,8 +409,8 @@ begin
         else if(reg_addr_i==8'h13) bg_r <= data_i_delay;
         else if(reg_addr_i==8'h14) bg_g <= data_i_delay;
         else if(reg_addr_i==8'h15) bg_b <= data_i_delay;
-        else if(reg_addr_i==8'h16) ink <= data_i_delay[3:0];
-        else if(reg_addr_i==8'h17) paper <= data_i_delay[3:0];
+        else if(reg_addr_i==8'h16) ink[active_buffer] <= data_i_delay[3:0];
+        else if(reg_addr_i==8'h17) paper[active_buffer] <= data_i_delay[3:0];
         else if(reg_addr_i==8'h20) video_mode <= data_i_delay[2:0];
         else if(reg_addr_i==8'h21) wpixel_y <= data_i_delay;
         else if(reg_addr_i==8'h22) wpixel_x[7:0] <= data_i_delay;
@@ -962,7 +968,7 @@ assign vblank = ((V_cnt < 12'd35) | (V_cnt > 12'd515)) ? 1'b1 : 1'b0;
         .ada(wpixel_addr), //input [15:0] ada
         .dina(vmem_in), //input [7:0] dina
         .adb((video_mode[2] == 1'b1) ? charbuf_raddr : pixel_addr), //input [15:0] adb
-        .dinb((video_mode[2] == 1'b1) ? {ink, paper} : 7'd0) //input [7:0] dinb
+        .dinb((video_mode[2] == 1'b1) ? {ink[active_buffer], paper[active_buffer]} : 7'd0) //input [7:0] dinb
     );
 
 wire [23:0] palmem_out;
