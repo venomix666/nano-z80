@@ -148,9 +148,9 @@ In addition to the banked port, the following ports are always available:
 0x12:  Foreground Blue  
 0x13:  Background Red  
 0x14:  Background Green  
-0x15:  Background Blue 
+0x15:  Background Blue   
 0x16:  Ink (0-15, corresponds to CGA colors), only used in video mode 0x04  
-0x17:  Paper (0-15, corresponds to CGA colors), only used in vide mode 0x04  
+0x17:  Paper (0-15, corresponds to CGA colors), only used in video mode 0x04  
 0x20:  Video mode - 0x00 Text mode, 0x01 160x120x8, 0x03 320x200x8, 0x04 Multi-color text mode, (0x02 is text mode with access to 320x200 buffer)   
 0x21:  Pixel Y (page 2 starts at line 120 for 160x120)  
 0x22:  Pixel X LSB  
