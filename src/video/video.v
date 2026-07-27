@@ -27,6 +27,7 @@
 // 15       - BG Blue
 // 16       - Ink [0-15], only works in color text mode
 // 17       - Paper [0-15], only works in color text mode
+// 18       - Inverse, only works in color text mode (in normal text mode byte 7 sets inverse)
 // 20       - Video mode - bit 0: 0: text mode, 1: graphics mode - bit 1: 0: 160x120x8, 1: 320x200x8, bit 2: 0: monochrome test, 1: color text
 // 21       - Pixel Y (Page 2 starts on line 120 in 160x120)
 // 22       - Pixel X LSB
@@ -269,6 +270,7 @@ reg     [7:0]   bg_b;
 // vt52 color extension handling
 reg [3:0]   ink     [3:0];
 reg [3:0]   paper   [3:0];
+reg         inverse [3:0];
 
 reg     [2:0]   video_mode;
 
@@ -294,6 +296,7 @@ begin
     else if(reg_addr_i == 8'h15) data_o_reg <= bg_b;
     else if(reg_addr_i == 8'h16) data_o_reg <= {4'd0, ink[active_buffer]};
     else if(reg_addr_i == 8'h17) data_o_reg <= {4'd0, paper[active_buffer]};
+    else if(reg_addr_i == 8'h18) data_o_reg <= {7'd0, inverse[active_buffer]};
     else if(reg_addr_i == 8'h20) data_o_reg <= {5'd0, video_mode};
     else if(reg_addr_i == 8'h21) data_o_reg <= wpixel_y;
     else if(reg_addr_i == 8'h22) data_o_reg <= wpixel_x[7:0];
@@ -360,6 +363,10 @@ begin
         paper[1] <= 4'd0;
         paper[2] <= 4'd0;
         paper[3] <= 4'd0;
+        inverse[0] <= 1'd0;
+        inverse[1] <= 1'd0;
+        inverse[2] <= 1'd0;
+        inverse[3] <= 1'd0;
 
         video_mode <= 3'd0;
 
@@ -411,6 +418,7 @@ begin
         else if(reg_addr_i==8'h15) bg_b <= data_i_delay;
         else if(reg_addr_i==8'h16) ink[active_buffer] <= data_i_delay[3:0];
         else if(reg_addr_i==8'h17) paper[active_buffer] <= data_i_delay[3:0];
+        else if(reg_addr_i==8'h18) inverse[active_buffer] <= data_i_delay[0];
         else if(reg_addr_i==8'h20) video_mode <= data_i_delay[2:0];
         else if(reg_addr_i==8'h21) wpixel_y <= data_i_delay;
         else if(reg_addr_i==8'h22) wpixel_x[7:0] <= data_i_delay;
@@ -896,17 +904,17 @@ charbuf_dpram_large charbuf(
 wire    [2:0]   font_x;
 wire    [11:0]  y_offset;
 wire    [3:0]   font_y;
-wire    [10:0]  font_addr;
+wire    [11:0]  font_addr;
 wire    [7:0]   font_data;
 wire            font_out;
 
 assign font_x = H_cnt[2:0]-6;
 assign y_offset = V_cnt - 12'd35;
 assign font_y = y_offset[3:0]; 
-assign font_addr = {char, font_y};
+assign font_addr = (video_mode[2] == 1'b1) ? {char, font_y} : {1'b0, char[6:0], font_y};
 assign char_cur[6:0] = char[6:0];
 assign char_cur[7] = (cursor_active && (char_x_delay == cursor_x[visible_buffer]) && (char_y == cursor_y[visible_buffer])) ? ~char[7] : char[7];
-assign font_out = char_cur[7] ? ~font_data[7'd7-font_x] : font_data[7'd7-font_x];
+assign font_out = (char_cur[7] && !video_mode[2]) ? ~font_data[7'd7-font_x] : font_data[7'd7-font_x];
 
 
 // Graphics mode stuff
@@ -968,7 +976,8 @@ assign vblank = ((V_cnt < 12'd35) | (V_cnt > 12'd515)) ? 1'b1 : 1'b0;
         .ada(wpixel_addr), //input [15:0] ada
         .dina(vmem_in), //input [7:0] dina
         .adb((video_mode[2] == 1'b1) ? charbuf_raddr : pixel_addr), //input [15:0] adb
-        .dinb((video_mode[2] == 1'b1) ? {ink[active_buffer], paper[active_buffer]} : 7'd0) //input [7:0] dinb
+        .dinb((video_mode[2] == 1'b1) ? (inverse[active_buffer] == 1'b0) ? {ink[active_buffer], paper[active_buffer]} : {paper[active_buffer], ink[active_buffer]}
+                                      : 7'd0) //input [7:0] dinb
     );
 
 wire [23:0] palmem_out;
@@ -1008,13 +1017,16 @@ reg [7:0]   background_b;
     );
 
 // Text mode color selection - handle monochrome and color text
-assign text_r = (video_mode[2] == 1'b0) ? fg_r : vt52_r[pixel_data[7:4]];
-assign text_g = (video_mode[2] == 1'b0) ? fg_g : vt52_g[pixel_data[7:4]];
-assign text_b = (video_mode[2] == 1'b0) ? fg_r : vt52_b[pixel_data[7:4]]; 
+wire cursor_now;
+assign cursor_now = (cursor_active && (char_x_delay == cursor_x[visible_buffer]) && (char_y == cursor_y[visible_buffer]));
 
-assign background_r = (video_mode[2] == 1'b0) ? bg_r : vt52_r[pixel_data[3:0]];
-assign background_g = (video_mode[2] == 1'b0) ? bg_g : vt52_g[pixel_data[3:0]];
-assign background_b = (video_mode[2] == 1'b0) ? bg_r : vt52_b[pixel_data[3:0]];
+assign text_r = (video_mode[2] == 1'b0) ? fg_r : (!cursor_now) ? vt52_r[pixel_data[7:4]] : vt52_r[pixel_data[3:0]];
+assign text_g = (video_mode[2] == 1'b0) ? fg_g : (!cursor_now) ? vt52_g[pixel_data[7:4]] : vt52_g[pixel_data[3:0]];
+assign text_b = (video_mode[2] == 1'b0) ? fg_r : (!cursor_now) ? vt52_b[pixel_data[7:4]] : vt52_b[pixel_data[3:0]]; 
+
+assign background_r = (video_mode[2] == 1'b0) ? bg_r : (!cursor_now) ? vt52_r[pixel_data[3:0]] : vt52_r[pixel_data[7:4]];
+assign background_g = (video_mode[2] == 1'b0) ? bg_g : (!cursor_now) ? vt52_g[pixel_data[3:0]] : vt52_g[pixel_data[7:4]];
+assign background_b = (video_mode[2] == 1'b0) ? bg_r : (!cursor_now) ? vt52_b[pixel_data[3:0]] : vt52_b[pixel_data[7:4]];
 
 assign video_out_r = (video_mode[0] == 1'b0) ? (font_out ? text_r : background_r) : ((video_mode[1] == 1'b1 && (pixel_y < 20 || pixel_y >220)) ? 8'd0 : color_out[7:0]);
 assign video_out_g = (video_mode[0] == 1'b0) ? (font_out ? text_g : background_g) : ((video_mode[1] == 1'b1 && (pixel_y < 20 || pixel_y >220)) ? 8'd0 : color_out[15:8]);
