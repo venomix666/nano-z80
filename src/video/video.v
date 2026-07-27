@@ -348,9 +348,9 @@ begin
         active_buffer <= 2'd0;
         visible_buffer <= 2'd0;
 
-        fg_r <= 8'h80;
-        fg_g <= 8'h80;
-        fg_b <= 8'h80;
+        fg_r <= 8'hAA;
+        fg_g <= 8'hAA;
+        fg_b <= 8'hAA;
         bg_r <= 8'h00;
         bg_g <= 8'h00;
         bg_b <= 8'h00;
