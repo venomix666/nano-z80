@@ -835,7 +835,7 @@ begin
 
 end
 
-assign cursor_active = (cursor_cnt > 24'h800000) && cursor_visible[active_buffer];
+assign cursor_active = (cursor_cnt > 24'h800000) && cursor_visible[visible_buffer];
 
 // Character addressing
 wire    [11:0]  char_x_offset;
