@@ -212,7 +212,7 @@ mmu mmu_inst(
     .clk_i(clk_i),                                                             
     .rst_n_i(rst_n),                                                           
     .wr_n(wr_n),                                                               
-    .reg_addr_i(cpu_addr[2:0]),                                                
+    .reg_addr_i(cpu_addr[3:0]),                                                
     .data_i(cpu_data_o),                                                       
     .addr_i(cpu_addr),                                                         
     .mmu_cs(mmu_cs),                                                           

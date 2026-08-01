@@ -102,7 +102,7 @@ always @(*) begin
             default: led_cs_reg <= 1'b0;
         endcase
     end
-    else if(ioreq_n == 1'b0 && m1_n == 1'b1 && addr_i[7:0] > 8'h5f && addr_i[7:0] < 8'h68)     
+    else if(ioreq_n == 1'b0 && m1_n == 1'b1 && addr_i[7:0] > 8'h5f && addr_i[7:0] < 8'h69)     
         mmu_cs_reg <= 1'b1;  
     else if(ioreq_n == 1'b0 && m1_n == 1'b1 && addr_i[7:0] > 8'h6f && addr_i[7:0] < 8'h74)
         uart_cs_reg <= 1'b1; // Always access UART registers
