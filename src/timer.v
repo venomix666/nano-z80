@@ -78,20 +78,16 @@ begin
     begin
         timer_sub <= 15'd0;
         timer_ms <= 16'd0;
-        timer_s <= 6'd0;
+        timer_s <= 7'd0;
         timer_s_ms <= 10'd0;
-        irq_n <= 1'b1;
     end else begin
         if(timer_run) begin
-            if(irq_ack) irq_n <= 1'b1;
-
             if(timer_sub == TIMER_MS_DELAY) begin
                 timer_sub <= 15'd0;
             
-                // Interrupt timer
+                // Programmable timer
                 if(timer_ms + 1'b1 >= timer_set_ms) begin
                     timer_ms <= 16'd0;
-                    if(!irq_ack) irq_n <= 1'b0;
                 end else begin
                     timer_ms <= timer_ms + 1;
                 end
@@ -112,10 +108,25 @@ begin
         end else begin
             // Reset timer if stopped
             timer_sub <= 15'd0;
-            timer_ms <= 15'd0;
+            timer_ms <= 16'd0;
             timer_s <= 6'd0;
             timer_s_ms <= 10'd0;
+        end
+    end
+end
+
+// IRQ flag logic
+always @(posedge clk_i or negedge rst_n_i) begin
+    if (!rst_n_i) begin
+        irq_n <= 1'b1;
+    end else if (!timer_run) begin
+        irq_n <= 1'b1;
+    end else begin
+        if (irq_ack) begin
             irq_n <= 1'b1;
+        end 
+        else if (timer_sub == TIMER_MS_DELAY && (timer_ms + 1'b1 >= timer_set_ms)) begin
+            irq_n <= 1'b0;
         end
     end
 end
