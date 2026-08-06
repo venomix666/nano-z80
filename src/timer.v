@@ -24,22 +24,15 @@ module timer(
     output              timer_irq_n_o
 );
 parameter CLK_FRE               = 25_175_000; 
-parameter TIMER_MS_DELAY        = (CLK_FRE / 1_000); // Millisecond delay
+parameter TIMER_MS_DELAY        = (CLK_FRE / 1_000) - 1; // Millisecond delay
 
 reg [7:0]   data_o_reg;
-
 reg [14:0]  timer_sub;
-
 reg [15:0]  timer_ms;
-
 reg [15:0]  timer_set_ms;
-
 reg [6:0]   timer_s;
-
 reg [9:0]   timer_s_ms;
-
 reg timer_run;
-
 reg irq_n;
 
 // Register reading
@@ -70,9 +63,9 @@ begin
     else if(timer_cs && !wr_n)
     begin
         case(reg_addr_i)
-            3'b000: timer_run <= data_i[0];
-            3'b001: timer_set_ms[7:0] <= data_i;
-            3'b010: timer_set_ms[15:8] <= data_i;
+            8'h00: timer_run <= data_i[0];
+            8'h01: timer_set_ms[7:0] <= data_i;
+            8'h02: timer_set_ms[15:8] <= data_i;
             default: ;
         endcase
     end
@@ -88,33 +81,35 @@ begin
         timer_s <= 6'd0;
         timer_s_ms <= 10'd0;
         irq_n <= 1'b1;
-    end
-    else
-    begin
+    end else begin
         if(timer_run) begin
             if(irq_ack) irq_n <= 1'b1;
 
             if(timer_sub == TIMER_MS_DELAY) begin
-                    timer_sub <= 15'd0;
+                timer_sub <= 15'd0;
+            
+                // Interrupt timer
+                if(timer_ms + 1'b1 >= timer_set_ms) begin
+                    timer_ms <= 16'd0;
+                    if(!irq_ack) irq_n <= 1'b0;
+                end else begin
                     timer_ms <= timer_ms + 1;
-                    timer_s_ms <= timer_s_ms + 1;
-            end
-            else
-                timer_sub <= timer_sub + 1;
-
-            if(timer_ms == timer_set_ms) begin
-                timer_ms <= 16'd0;
-                if(!irq_ack) irq_n <= 1'b0;
-            end
-
-            if(timer_s_ms == 1000) begin
-                if(timer_s < 59) timer_s <= timer_s + 1;
-                else timer_s <= 6'd0;
-                timer_s_ms <= 10'd0;
-            end
-           
-        end
-        else begin
+                end
+            
+                // Seconds timer
+                if(timer_s_ms == 10'd999) begin
+                    timer_s_ms <= 10'd0;
+                    if(timer_s < 7'd59) 
+                        timer_s <= timer_s + 1'b1;
+                    else
+                        timer_s <= 7'd0;
+                end else begin
+                    timer_s_ms <= timer_s_ms + 1'b1;
+                end
+            end else begin
+                timer_sub <= timer_sub + 1'b1;
+            end     
+        end else begin
             // Reset timer if stopped
             timer_sub <= 15'd0;
             timer_ms <= 15'd0;
