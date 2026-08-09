@@ -129,7 +129,7 @@ begin
     end
     else if(uart_cs)
     begin
-        if(reg_addr==8'b00000100 && !R_W_n)
+        if((reg_addr==8'b00000100 || reg_addr==8'h7a) && !R_W_n)
         begin
                 tx_b_done <= 1'b0;
                 tx_b_data <= data_i;
@@ -167,6 +167,10 @@ begin
             8'h71: data_o_reg <= {7'd0, tx_data_ready};
             8'h72: data_o_reg <= rx_data_reg;
             8'h73: data_o_reg <= {7'd0, rx_data_avail};
+            8'h7a: data_o_reg <= tx_b_data;
+            8'h7b: data_o_reg <= {7'd0, tx_b_data_ready};
+            8'h7c: data_o_reg <= rx_b_data_reg;
+            8'h7d: data_o_reg <= {7'd0, rx_b_data_avail};
 
             default: data_o_reg <= 8'd0;
         endcase
@@ -220,7 +224,7 @@ begin
         rx_buffer_b[rx_buffer_b_w] <= rx_b_data;
         rx_buffer_b_w <= rx_buffer_b_w + 1;
     end
-    else if((reg_addr == 8'b00000110) && (uart_cs) && (!uart_cs_prev) && (rx_b_data_avail))
+    else if((reg_addr == 8'b00000110 || reg_addr == 8'h7c) && (uart_cs) && (!uart_cs_prev) && (rx_b_data_avail))
     begin
         rx_b_data_reg <= rx_buffer_b[rx_buffer_b_r];
         rx_buffer_b_r <= rx_buffer_b_r + 1;
