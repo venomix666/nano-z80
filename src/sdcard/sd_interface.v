@@ -8,6 +8,7 @@
 // 07       -   Access page - Sets page of sector to access (0-3)
 // 08       -   SD card status
 // 09       -   SD card type
+// 0a       -   SD card data, automatic address increment. Resets to 0 at read/write
 // 80-FF    -   128 byte access to data, controlled by page register
 //
 
@@ -36,6 +37,10 @@ reg [7:0]   sd_data_o;
 reg [7:0]   page;
 reg [1:0]   state;
 reg [7:0]   data_i_delay;
+
+reg [8:0]   acc_addr;
+reg         sd_cs_prev;
+reg [7:0]   reg_addr_prev;
 
 wire byte_available;
 wire ready_for_next_byte;
@@ -73,8 +78,8 @@ sector_dpram buffer(
     .clkb(clk_i), 
     .resetb(1'b0), 
     .ceb(1'b1), 
-    .adb({page[1:0], reg_addr_i[6:0]}), 
-    .wreb(reg_addr_i[7] && !wr_n && sd_cs), 
+    .adb(reg_addr_i[7] ? {page[1:0], reg_addr_i[6:0]} : acc_addr), 
+    .wreb((reg_addr_i[7] || reg_addr_i == 8'h0a) && !wr_n && sd_cs), 
     .dinb(data_i_delay),
     .oceb(1'b1), 
     .doutb(buf_data_o)					
@@ -92,12 +97,26 @@ begin
         8'h07: data_o_reg = page;
         8'h08: data_o_reg = {4'd0, card_stat};
         8'h09: data_o_reg = {6'd0, card_type};
+        8'h0a: data_o_reg = buf_data_o;
         default:
         begin
             if(reg_addr_i[7]) data_o_reg = buf_data_o;
             else data_o_reg = 8'd0;
         end
     endcase
+end
+
+always @(posedge clk_i or negedge rst_n_i)
+begin
+    if(rst_n_i == 1'b0)
+    begin
+        sd_cs_prev <= 1'b0;
+        reg_addr_prev <= 8'd0;
+    end
+    else begin
+        sd_cs_prev <= sd_cs;
+        reg_addr_prev <= reg_addr_i;
+    end
 end
 
 // Synchronous write
@@ -109,6 +128,7 @@ begin
         rd <= 1'b0;
         wr <= 1'b0;
         page <= 2'd0;
+        acc_addr <= 9'd0;
         state <= IDLE;
     end
     else if(state == READING)
@@ -123,6 +143,10 @@ begin
         rd<=1'b0;
         wr<=1'b0;
     end
+    // Increment port 0x0a address on end of cycle
+    else if((!sd_cs) && (sd_cs_prev) && (reg_addr_prev == 8'h0a)) begin
+        acc_addr <= acc_addr + 1'b1;
+    end
     else if((sd_cs) && (!wr_n))
     begin
         case(reg_addr_i)
@@ -136,6 +160,7 @@ begin
                 begin
                     rd <= 1'b1;
                     state <= READING;
+                    acc_addr <= 9'd0;
                 end
             end
             8'h06:  
@@ -144,6 +169,7 @@ begin
                 begin
                     wr <= 1'b1;
                     state <= WRITING;
+                    acc_addr <= 9'd0;
                 end
             end
             8'h07:  page <= data_i;
