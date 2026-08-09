@@ -70,7 +70,7 @@ The IO select register (port 0x7f) performs banking of the IO ports and can be s
 0x06: Interrupt controller selected  
 0x07: Timer selected  
 
-In addition to the banked port, the following ports are always available:  
+In addition to the banked ports, the following ports are always available:  
 0x60: MMU bank 0 LSB (8 bits) (0x0000-0x3FFF)  
 0x61: MMU bank 0 MSB (1 bits) (0x0000-0x3FFF)  
 0x62: MMU bank 1 LSB (8 bits) (0x4000-0x7FFF)  
@@ -86,7 +86,13 @@ In addition to the banked port, the following ports are always available:
 0x74: Keyboard data available   
 0x75: Keyboard data  
 0x76: Video TTY data write  
-0x77: Video TTY busy  
+0x77: Video TTY busy
+0x78: Timer seconds counter  
+0x79: Interrupt flags  
+0x7a: UART B TX data  
+0x7b: UART B TX ready  
+0x7c: UART B RX data  
+0x7d: UART B RX available  
 0x7e: ROM disable  
 
 ### LED ports (0x7f == 0x00)
@@ -126,6 +132,7 @@ In addition to the banked port, the following ports are always available:
 0x07:  Sector data page register (0-3), selects which 128 bytes of the sector are availabe on 0xfe80-0xfeff  
 0x08:  SD card status (debug only)  
 0x09:  SD card type (debug only)  
+0x0a:  SD data byte interface, auto increments when accessed and reset to 0 on SD card read/write  
 0x80 - 0xff: 128 byte data page, paged by the page register so that all 512 bytes can be accessed 
 
 ### Video/TTY ports (0x7f == 0x04)
