@@ -16,7 +16,7 @@ Current features:
 * Programmable interrupt controller with 8 irq channels
 * Programmable timer for generating timer interrupts
 
-Everything is clocked of the pixel clock, so the Z80-core is running at 25.175 MHz but is a bit waitstated by the SDRAM which runs at 50.35 MHz.
+Everything is clocked of the pixel clock, so the Z80-core is running at 25.175 MHz but is a bit waitstated by the SDRAM which runs at 100.7 MHz.
 
 A port of David Given's [CP/Mish](https://github.com/davidgiven/cpmish) gives a very nice CP/M 2.2 environment for this computer. See the [cpmish page](https://github.com/davidgiven/cpmish/blob/master/arch/nano-z80/README.md) for more details.  
 
