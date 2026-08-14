@@ -1,5 +1,6 @@
 module sdram_z80_interface (
-    input clk_50,          // 50.35 MHz
+    input clk_100,          // 50.35 MHz
+    input clk_100p,
     input reset_n,
     
     // Z80 Bus
@@ -51,7 +52,7 @@ module sdram_z80_interface (
     assign sd_dq = driving_bus ? {data_i, data_i, data_i, data_i} : 32'bz;
 
     // Physical static signals
-    assign sd_clk   = clk_50;
+    assign sd_clk   = clk_100;
     assign sd_cke   = 1'b1;
     assign sd_cs_n  = 1'b0; 
 
@@ -60,10 +61,10 @@ module sdram_z80_interface (
                       (addr_i[1:0] == 2'b01) ? data_latch[15:8]  :
                       (addr_i[1:0] == 2'b10) ? data_latch[23:16] : data_latch[31:24];
 
-    always @(posedge clk_50 or negedge reset_n) begin
+    always @(posedge clk_100 or negedge reset_n) begin
         if (!reset_n) begin
             state <= STARTUP;
-            wait_cnt <= 10000; 
+            wait_cnt <= 20000; 
             wait_n <= 0;      
             {sd_ras_n, sd_cas_n, sd_we_n} <= C_NOP;
             sd_dqm <= 4'b1111;
@@ -76,7 +77,7 @@ module sdram_z80_interface (
             end
             
             if(state > IDLE) begin
-                if(ref_timer < 390) ref_timer <= ref_timer + 1;
+                if(ref_timer < 1560) ref_timer <= ref_timer + 1;
             end
 
             case (state)
@@ -103,7 +104,7 @@ module sdram_z80_interface (
                     wait_n <= 1;
                     
                     {sd_ras_n, sd_cas_n, sd_we_n} <= C_NOP;
-                    if (ref_timer >= 390) state <= REFRESH;
+                    if (ref_timer >= 1560) state <= REFRESH;
                     else if (!mreq_n && ram_cs && (!rd_n || !wr_n) && !cycle_done) begin
                         // Latch input signals
                         addr_i_latch <= addr_i;

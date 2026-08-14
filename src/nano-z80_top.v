@@ -100,13 +100,13 @@ assign leds[0] = ~ledwire[0];
 wire   [8:0]    high_addr;
 
 // SDRAM clocks
-wire clk50;
-wire clk50_p;
+wire clk100;
+wire clk100_p;
 
 // PLL to generate SDRAM clocks
 Gowin_rPLL sdram_pll(
-        .clkout(clk50), //output clkout
-        .clkoutp(clk50_p), //output clkoutp
+        .clkout(clk100), //output clkout
+        .clkoutp(clk100_p), //output clkoutp
         .clkin(clk_i) //input clkin
 );
 
@@ -181,7 +181,8 @@ bootrom bootrom_inst(
 );
  
 sdram_z80_interface sdram_z80_interface_inst(
-    .clk_50(clk50),
+    .clk_100(clk100),
+    .clk_100p(clk100p),
     .reset_n(rst_n),
     .addr_i(cpu_addr),
     .data_i(cpu_data_o),
