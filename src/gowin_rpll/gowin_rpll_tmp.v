@@ -5,7 +5,7 @@
 //Part Number: GW2AR-LV18QN88C8/I7
 //Device: GW2AR-18
 //Device Version: C
-//Created Time: Sun Oct 19 16:18:22 2025
+//Created Time: Fri Aug 14 10:50:42 2026
 
 //Change the instance name and port connections to the signal names
 //--------Copy here to design--------
