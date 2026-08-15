@@ -35,6 +35,13 @@ module sdram_z80_interface (
     reg [11:0]  ref_timer;
     reg [31:0] data_latch;
 
+    // Cache registers
+    reg [22:0]  cache_tag;
+    reg         cache_valid;
+
+    // Cache hit if read within the same 32 bits from the SDRAM
+    wire cache_hit = cache_valid && (!rd_n) && ({current_bank_reg, addr_i[15:2]} == cache_tag);
+
     reg [8:0] current_bank_latch;
     reg [15:0] addr_i_latch;
     reg [7:0] data_i_latch;
@@ -70,6 +77,8 @@ module sdram_z80_interface (
             sd_dqm <= 4'b1111;
             ref_timer <= 0;
             cycle_done <= 1'b0;
+            cache_tag <= 23'd0;
+            cache_valid <= 1'b0;
             
         end else begin
             if(mreq_n) begin
@@ -106,13 +115,18 @@ module sdram_z80_interface (
                     {sd_ras_n, sd_cas_n, sd_we_n} <= C_NOP;
                     if (ref_timer >= 1560) state <= REFRESH;
                     else if (!mreq_n && ram_cs && (!rd_n || !wr_n) && !cycle_done) begin
-                        // Latch input signals
-                        addr_i_latch <= addr_i;
-                        data_i_latch <= data_i;
-                        wr_n_latch <= wr_n;
-                        rd_n_latch <= rd_n;
-                        wait_n <= 0;
-                        state <= ACT;
+                        if(!rd_n && cache_hit) begin
+                            // Cache hit, no new read
+                            cycle_done <= 1;
+                        end else begin
+                            // Latch input signals
+                            addr_i_latch <= addr_i;
+                            data_i_latch <= data_i;
+                            wr_n_latch <= wr_n;
+                            rd_n_latch <= rd_n;
+                            wait_n <= 0;
+                            state <= ACT;
+                        end
                     end
 
                 end
@@ -153,6 +167,11 @@ module sdram_z80_interface (
                     sd_a <= {3'b100, addr_i_latch[9:2]}; // A10=1: Auto-Precharge
                     
                     if (!wr_n) begin
+                        // Invalidate cache if writing to cached address range
+                        if({current_bank_latch, addr_i_latch[15:2]} == cache_tag) begin
+                            cache_valid <= 1'b0;
+                        end
+
                         case(addr_i_latch[1:0])
                             2'b00: sd_dqm <= 4'b1110;
                             2'b01: sd_dqm <= 4'b1101;
@@ -169,8 +188,11 @@ module sdram_z80_interface (
                     {sd_ras_n, sd_cas_n, sd_we_n} <= C_NOP;
                     if (wait_cnt > 0) wait_cnt <= wait_cnt - 1;
                     else begin
-                        if (!rd_n_latch) data_latch <= sd_dq; 
-                        
+                        if (!rd_n_latch) begin
+                            data_latch <= sd_dq; 
+                            cache_tag <= {current_bank_latch, addr_i_latch[15:2]};
+                            cache_valid <= 1'b1;
+                        end
                         cycle_done <= 1'b1;
                         state <= IDLE;
                     end
