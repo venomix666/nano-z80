@@ -52,7 +52,7 @@ Write the [nano-z80.img](https://github.com/venomix666/nano-z80/releases/latest/
 
 Write the [FUZIX image](https://github.com/venomix666/nano-z80/releases/latest/download/FUZIX-disk.img) file to the SD-card, with an offset of 0x100000 blocks. If you use `dd`, the following command can be used:
 ```console                                                                      
-dd if=./FUSIX-disk.img of=/dev/sdX bs=512 seek=$((0x00100000))                         
+dd if=./FUZIX-disk.img of=/dev/sdX bs=512 seek=$((0x00100000))                         
 ```    
 ### Booting
 In the monitor, press B to start CP/Mish from the SD-card.  
