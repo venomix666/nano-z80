@@ -8,7 +8,7 @@
 // 07       -   Access page - Sets page of sector to access (0-3)
 // 08       -   SD card status
 // 09       -   SD card type
-// 0a       -   SD card data, automatic address increment. Resets to 0 at read/write
+// 0a       -   SD card data, automatic address increment. Resets to 0 at read/write or page change
 // 80-FF    -   128 byte access to data, controlled by page register
 //
 
@@ -172,7 +172,11 @@ begin
                     acc_addr <= 9'd0;
                 end
             end
-            8'h07:  page <= data_i;
+            8'h07:
+            begin   
+                page <= data_i;
+                acc_addr <= {data_i[1:0], 7'd0};
+            end
         endcase
     end
     else
