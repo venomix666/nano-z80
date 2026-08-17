@@ -23,7 +23,7 @@ module timer(
     output  [7:0]       data_o,
     output              timer_irq_n_o
 );
-parameter CLK_FRE               = 25_175_000; 
+parameter CLK_FRE               = 27_000_000; 
 parameter TIMER_MS_DELAY        = (CLK_FRE / 1_000) - 1; // Millisecond delay
 
 reg [7:0]   data_o_reg;

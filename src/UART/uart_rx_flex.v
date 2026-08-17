@@ -1,6 +1,6 @@
 module uart_rx_flex
 #(
-	parameter CLK_FRE = 50      //clock frequency(Mhz)
+	parameter CLK_FRE = 27      //clock frequency(Mhz)
 )
 (
 	input                        clk,              //clock input

@@ -26,7 +26,7 @@ module uart(
 0xfe08: UART B baud rate
 */
 
-parameter                        CLK_FRE  = 25.175;//Mhz
+parameter                        CLK_FRE  = 27.000;//Mhz
 parameter                        UART_FRE = 115200;
 parameter                        UART_B_FRE = 57600;
 
