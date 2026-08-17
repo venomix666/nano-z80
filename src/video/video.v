@@ -968,7 +968,7 @@ assign pixel_x_offset = H_cnt-12'd163;//12'd147;
 assign pixel_x = (video_mode[1] == 1'b1) ? pixel_x_offset[9:1] : pixel_x_offset[9:2];
 assign pixel_y = (video_mode[1] == 1'b1) ? pixel_y_offset[9:1] : pixel_y_offset[9:2];
 
-assign hgate = (pixel_x_offset > 12'd640); 
+assign hgate = (pixel_x_offset > 12'd641) || (pixel_x_offset < 3); 
 
 // 2 pages in 160x120, 1 page in 320x200
 assign page_offset = (vpage == 1'b0) ? 16'h0000 : 16'h4B00;
