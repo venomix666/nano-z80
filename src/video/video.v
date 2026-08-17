@@ -883,7 +883,7 @@ reg     [6:0]   char_x_delay;
 wire    [13:0]  active_buffer_offset;
 wire    [13:0]  visible_buffer_offset;
 
-assign char_x_offset = H_cnt-12'd228;//12'd148;//-12'd149;      
+assign char_x_offset = H_cnt-12'd164;//12'd148;//-12'd149;      
 assign char_x = char_x_offset[9:3];
 assign char_y_offset = V_cnt-12'd35;
 assign char_y = char_y_offset[8:4];
@@ -961,11 +961,14 @@ wire [15:0] wpixel_addr;
 wire [15:0] page_offset;
 
 wire        vblank;
+wire        hgate;
 
 assign pixel_y_offset = V_cnt-12'd35;
-assign pixel_x_offset = H_cnt-12'd227;//12'd147;
+assign pixel_x_offset = H_cnt-12'd163;//12'd147;
 assign pixel_x = (video_mode[1] == 1'b1) ? pixel_x_offset[9:1] : pixel_x_offset[9:2];
 assign pixel_y = (video_mode[1] == 1'b1) ? pixel_y_offset[9:1] : pixel_y_offset[9:2];
+
+assign hgate = (pixel_x_offset > 12'd640); 
 
 // 2 pages in 160x120, 1 page in 320x200
 assign page_offset = (vpage == 1'b0) ? 16'h0000 : 16'h4B00;
@@ -1034,7 +1037,7 @@ reg [7:0]   background_b;
         .ada(pal_color), //input [7:0] ada
         .dina(palmem_in), //input [23:0] dina
         .adb(pixel_data), //input [7:0] adb
-        .dinb(23'd0) //input [23:0] dinb
+        .dinb(24'd0) //input [23:0] dinb
     );
 
 // Text mode color selection - handle monochrome and color text
@@ -1049,9 +1052,9 @@ assign background_r = (video_mode[2] == 1'b0) ? bg_r : (!cursor_now) ? vt52_r[pi
 assign background_g = (video_mode[2] == 1'b0) ? bg_g : (!cursor_now) ? vt52_g[pixel_data[3:0]] : vt52_g[pixel_data[7:4]];
 assign background_b = (video_mode[2] == 1'b0) ? bg_r : (!cursor_now) ? vt52_b[pixel_data[3:0]] : vt52_b[pixel_data[7:4]];
 
-assign video_out_r = (video_mode[0] == 1'b0) ? (font_out ? text_r : background_r) : ((video_mode[1] == 1'b1 && (pixel_y < 20 || pixel_y >220)) ? 8'd0 : color_out[7:0]);
-assign video_out_g = (video_mode[0] == 1'b0) ? (font_out ? text_g : background_g) : ((video_mode[1] == 1'b1 && (pixel_y < 20 || pixel_y >220)) ? 8'd0 : color_out[15:8]);
-assign video_out_b = (video_mode[0] == 1'b0) ? (font_out ? text_b : background_b) : ((video_mode[1] == 1'b1 && (pixel_y < 20 || pixel_y >220)) ? 8'd0 : color_out[23:16]);
+assign video_out_r = hgate ? 8'd0 : (video_mode[0] == 1'b0) ? (font_out ? text_r : background_r) : ((video_mode[1] == 1'b1 && (pixel_y < 20 || pixel_y >220)) ? 8'd0 : color_out[7:0]);
+assign video_out_g = hgate ? 8'd0 : (video_mode[0] == 1'b0) ? (font_out ? text_g : background_g) : ((video_mode[1] == 1'b1 && (pixel_y < 20 || pixel_y >220)) ? 8'd0 : color_out[15:8]);
+assign video_out_b = hgate ? 8'd0 : (video_mode[0] == 1'b0) ? (font_out ? text_b : background_b) : ((video_mode[1] == 1'b1 && (pixel_y < 20 || pixel_y >220)) ? 8'd0 : color_out[23:16]);
 
 fontrom fontrom_inst(
     .clk(clk_i),

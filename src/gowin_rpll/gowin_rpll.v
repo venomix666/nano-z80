@@ -40,7 +40,7 @@ rPLL rpll_inst (
     .FDLY({gw_vcc,gw_vcc,gw_vcc,gw_vcc})
 );
 
-defparam rpll_inst.FCLKIN = "25.175";
+defparam rpll_inst.FCLKIN = "27.0";
 defparam rpll_inst.DYN_IDIV_SEL = "false";
 defparam rpll_inst.IDIV_SEL = 0;
 defparam rpll_inst.DYN_FBDIV_SEL = "false";
