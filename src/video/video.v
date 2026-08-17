@@ -65,6 +65,27 @@
     Sync Polarity        neg
 */
 
+// 720x480 info:
+/*  
+    Horizontal Timings
+    Active Pixels        720
+    Front Porch           16
+    Sync Width            62
+    Back Porch            60
+    Blanking Total       138
+    Total Pixels         858
+    Sync Polarity        neg
+
+    Vertical Timings
+    Active Lines         480
+    Front Porch           9
+    Sync Width             6
+    Back Porch            30
+    Blanking Total        45
+    Total Lines          525
+    Sync Polarity        neg
+*/
+
 module video(
     input               clk_vid_i,
     input               clk_i,
@@ -81,14 +102,14 @@ module video(
     output [2:0]        tmds_data_n_o
 );
 
-// Parameters for 640x480 60Hz with 25.175 MHz clock
-localparam      I_h_total       = 12'd800;
-localparam      I_h_sync        = 12'd96;
-localparam      I_h_bporch      = 12'd48;
-localparam      I_h_res         = 12'd640;
+// Parameters for 720x480 60Hz with 27 MHz clock
+localparam      I_h_total       = 12'd858;
+localparam      I_h_sync        = 12'd62;
+localparam      I_h_bporch      = 12'd60;
+localparam      I_h_res         = 12'd720;
 localparam      I_v_total       = 12'd525;
-localparam      I_v_sync        = 12'd2;
-localparam      I_v_bporch      = 12'd33;
+localparam      I_v_sync        = 12'd6;
+localparam      I_v_bporch      = 12'd30;
 localparam      I_v_res         = 12'd480;
 localparam      I_hs_pol        = 1'd0;
 localparam      I_vs_pol        = 1'd0;
@@ -862,7 +883,7 @@ reg     [6:0]   char_x_delay;
 wire    [13:0]  active_buffer_offset;
 wire    [13:0]  visible_buffer_offset;
 
-assign char_x_offset = H_cnt-12'd148;//-12'd149;      
+assign char_x_offset = H_cnt-12'd228;//12'd148;//-12'd149;      
 assign char_x = char_x_offset[9:3];
 assign char_y_offset = V_cnt-12'd35;
 assign char_y = char_y_offset[8:4];
@@ -942,7 +963,7 @@ wire [15:0] page_offset;
 wire        vblank;
 
 assign pixel_y_offset = V_cnt-12'd35;
-assign pixel_x_offset = H_cnt-12'd147;
+assign pixel_x_offset = H_cnt-12'd227;//12'd147;
 assign pixel_x = (video_mode[1] == 1'b1) ? pixel_x_offset[9:1] : pixel_x_offset[9:2];
 assign pixel_y = (video_mode[1] == 1'b1) ? pixel_y_offset[9:1] : pixel_y_offset[9:2];
 
