@@ -86,7 +86,7 @@ module sdram_z80_interface (
             end
             
             if(state > IDLE) begin
-                if(ref_timer < 1560) ref_timer <= ref_timer + 1;
+                if(ref_timer < 1000) ref_timer <= ref_timer + 1;
             end
 
             case (state)
@@ -113,7 +113,7 @@ module sdram_z80_interface (
                     wait_n <= 1;
                     
                     {sd_ras_n, sd_cas_n, sd_we_n} <= C_NOP;
-                    if (ref_timer >= 1560) state <= REFRESH;
+                    if (ref_timer >= 1000) state <= REFRESH;
                     else if (!mreq_n && ram_cs && (!rd_n || !wr_n) && !cycle_done) begin
                         if(!rd_n && cache_hit) begin
                             // Cache hit, no new read
