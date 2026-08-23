@@ -885,7 +885,7 @@ wire    [13:0]  visible_buffer_offset;
 
 assign char_x_offset = H_cnt-12'd164;//12'd148;//-12'd149;      
 assign char_x = char_x_offset[9:3];
-assign char_y_offset = V_cnt-12'd35;
+assign char_y_offset = V_cnt-12'd36;
 assign char_y = char_y_offset[8:4];
 assign scroll_y = (char_y + start_y[visible_buffer]) % LINES;
 assign scroll_line = (line + start_y[visible_buffer]) % LINES;
@@ -963,7 +963,7 @@ wire [15:0] page_offset;
 wire        vblank;
 wire        hgate;
 
-assign pixel_y_offset = V_cnt-12'd35;
+assign pixel_y_offset = V_cnt-12'd36;
 assign pixel_x_offset = H_cnt-12'd163;//12'd147;
 assign pixel_x = (video_mode[1] == 1'b1) ? pixel_x_offset[9:1] : pixel_x_offset[9:2];
 assign pixel_y = (video_mode[1] == 1'b1) ? pixel_y_offset[9:1] : pixel_y_offset[9:2];
