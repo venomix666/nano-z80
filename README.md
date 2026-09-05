@@ -79,6 +79,8 @@ In addition to the banked ports, the following ports are always available:
 0x65: MMU bank 2 MSB (1 bits) (0x8000-0xBFFF)  
 0x66: MMU bank 3 LSB (8 bits) (0xC000-0xFFFF)  
 0x67: MMU bank 3 MSB (1 bits) (0xC000-0xFFFF)  
+0x68: MMU fixed top (0xF000-0xFFFF)  
+0x69: MMU page (0-127, switches all four bank registers)  
 0x70: UART A TX data  
 0x71: UART A TX ready  
 0x72: UART A RX data  
