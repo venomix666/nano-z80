@@ -19,6 +19,7 @@
 // 66 - region 3 page LSB (defaults to 00000011)
 // 67 - region 3 page MSB (defaults to 0)
 // 68 - Enable fixed region above 0xf000
+// 69 - Switch all pages to value x4, x4+1, x4+2 and x4+3. Write only
 
 module mmu(
 	input               clk_i,
@@ -79,6 +80,12 @@ begin
             4'b0110: page_3[7:0] <= data_i;
             4'b0111: page_3[8] <= data_i[0];
             4'b1000: fixed_page <= data_i[0];
+            4'b1001: begin
+                page_0 <= {data_i[6:0], 2'b00};
+                page_1 <= {data_i[6:0], 2'b01};
+                page_2 <= {data_i[6:0], 2'b10};
+                page_3 <= {data_i[6:0], 2'b11};
+            end
         endcase
     end
 end
