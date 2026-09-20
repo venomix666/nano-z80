@@ -1,11 +1,11 @@
-//Copyright (C)2014-2024 Gowin Semiconductor Corporation.
+//Copyright (C)2014-2025 Gowin Semiconductor Corporation.
 //All rights reserved.
 //File Title: IP file
-//Tool Version: V1.9.9.03 Education
+//Tool Version: V1.9.11.03 Education
 //Part Number: GW2AR-LV18QN88C8/I7
 //Device: GW2AR-18
 //Device Version: C
-//Created Time: Fri Aug 14 10:50:42 2026
+//Created Time: Sun Sep 20 09:25:51 2026
 
 module Gowin_rPLL (clkout, clkoutp, clkin);
 
@@ -40,14 +40,14 @@ rPLL rpll_inst (
     .FDLY({gw_vcc,gw_vcc,gw_vcc,gw_vcc})
 );
 
-defparam rpll_inst.FCLKIN = "27.0";
+defparam rpll_inst.FCLKIN = "27";
 defparam rpll_inst.DYN_IDIV_SEL = "false";
 defparam rpll_inst.IDIV_SEL = 0;
 defparam rpll_inst.DYN_FBDIV_SEL = "false";
-defparam rpll_inst.FBDIV_SEL = 3;
+defparam rpll_inst.FBDIV_SEL = 1;
 defparam rpll_inst.DYN_ODIV_SEL = "false";
-defparam rpll_inst.ODIV_SEL = 8;
-defparam rpll_inst.PSDA_SEL = "0100";
+defparam rpll_inst.ODIV_SEL = 16;
+defparam rpll_inst.PSDA_SEL = "1000";
 defparam rpll_inst.DYN_DA_EN = "false";
 defparam rpll_inst.DUTYDA_SEL = "1000";
 defparam rpll_inst.CLKOUT_FT_DIR = 1'b1;
