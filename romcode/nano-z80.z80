@@ -61,6 +61,8 @@ input_loop:
         jp z, monitor_boot
         cp 'L'
         jp z, monitor_sd_load
+        cp 'F'
+        jp z, monitor_fuzix_boot
         cp 'W'
         jp z, monitor_memory_write
         cp $0d
@@ -103,6 +105,10 @@ monitor_boot:
 
 monitor_sd_load:
         call sd_boot
+        ret
+
+monitor_fuzix_boot:
+        call fuzix_boot
         ret
 
 monitor_jump:
@@ -365,8 +371,10 @@ init_im2_loop:
         include "read.z80"
         include "sdcard.z80"
         include "memtest.z80"
+        include "fuzixboot.z80"
+
 msg_boot:
-        db "nano-Z80 monitor v0.2",13,10
+        db "nano-Z80 monitor v0.3",13,10
         db 13,10
         db "Available commands:", 13,10
         db "MAAAA,NNNN  - display NNNN bytes of memory at addresss AAAA", 13,10
@@ -374,8 +382,9 @@ msg_boot:
         db "JAAAA       - jump to address AAAA", 13, 10
         db "OPP,DD      - write data DD to IO port PP", 13, 10
         db "IPP,NN      - read NN bytes from IO port PP", 13, 10
-        db "B           - boot from the SD card", 13, 10
-        db "L           - load image from the SD card without booting",13, 10
+        db "B           - boot CP/M from the SD card", 13, 10
+        db "L           - load CP/M image from the SD card without booting",13, 10
+        db "F           - boot Fuzix from the SD card", 13, 10
         db "T           - run memory test",13,10,0
 msg_ready:
         db "Ready",13,10,0
