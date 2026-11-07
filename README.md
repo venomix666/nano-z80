@@ -55,8 +55,7 @@ Write the [FUZIX image](https://github.com/venomix666/nano-z80/releases/latest/d
 dd if=./FUZIX-disk.img of=/dev/sdX bs=512 seek=$((0x00100000))                         
 ```    
 ### Booting
-In the monitor, press B to start CP/Mish from the SD-card.  
-In order to start FUZIX, run fuzix.com which is included on the A-drive in CP/Mish.
+In the monitor, press B to start CP/Mish, or F to start FUZIX.  
 
 ## Peripherals and IO model
 In order to maximize the amount of available IO ports, a simple banked IO model is used.   
